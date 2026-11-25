@@ -1186,7 +1186,8 @@ var RiskCore = (function(){
     $('results').hidden=false;
     $('emptyState').hidden=true;
 
-    $('oldFareBig').textContent=input.oldFare;
+    /* 旧价缺失时不显示 0，改为 "—" 避免看起来像"旧票价 0 元" */
+    $('oldFareBig').textContent=(input.oldFare>0)?input.oldFare:'—';
     $('newFareBig').textContent=input.newFare;
     /* 旧票价缺失/为0 时无法算涨幅，应说明"无法对比"而不是谎称"票价不变" */
     var badgeText;
@@ -1293,19 +1294,25 @@ var RiskCore = (function(){
       $('recommendationTitle').innerHTML='建议买 <strong>'+best.n+' 次票</strong>（'+best.price+' 元）';
       /* 复用外层已声明的 saving，避免同作用域重复 var */
       saving=result.payg.total-best.total;
-      /* 三数并列：总支出 + 两个参照（相对新规刷码省、相对调价前多花/少花） */
-      $('recommendationSaving').textContent='每月预计花 '+money(best.total)+' 元，比新规直接刷码省 '+money(saving)+' 元，比调价前'+(diffBest<0?'少花 ':'多花 ')+money(Math.abs(diffBest))+' 元';
+      /* 三数并列：总支出 + 参照。旧价缺失时只给"比新规刷码省"，
+         不能输出"比调价前多花/少花"（旧价为 0 时该差额无意义） */
+      if(oldMissing){
+        $('recommendationSaving').textContent='每月预计花 '+money(best.total)+' 元，比新规直接刷码省 '+money(saving)+' 元';
+      }else{
+        $('recommendationSaving').textContent='每月预计花 '+money(best.total)+' 元，比新规直接刷码省 '+money(saving)+' 元，比调价前'+(diffBest<0?'少花 ':'多花 ')+money(Math.abs(diffBest))+' 元';
+      }
       var details='每月 '+result.totalTrips+' 次';
       if(best.overflow>0) details+='，溢出 '+best.overflow+' 次已计入成本';
       details+=best.waste>0?'，预计剩 '+best.waste+' 次。':'，无剩余次数。';
       $('recommendationDetail').textContent=details;
     }
     /* 费用参照三数并列（始终显示，让三个数字的基准一目了然）
-       口径统一：三列都含公交支出（oldCostAll 已含旧公交成本） */
+       口径统一：三列都含公交支出（oldCostAll 已含旧公交成本）
+       旧价缺失时第一列无意义，显示"—"而不是 0.0 */
     var cb=$('costBreakdown');
     if(cb){
       cb.hidden=false;
-      $('cbOld').textContent=money(result.oldCostAll);
+      $('cbOld').textContent=oldMissing?'—':money(result.oldCostAll);
       $('cbPayg').textContent=money(result.payg.total);
       $('cbBest').textContent=money(result.best.total);
       /* 推荐刷码时不存在"买票后"，标签改为"推荐方案"避免误导 */
@@ -1315,7 +1322,8 @@ var RiskCore = (function(){
       if(result.best.key!=='payg' && result.best.waste>0) cbNote+='，预计剩 '+result.best.waste+' 次';
       cbNote+='。';
       if(input.busPerDay>0) cbNote+='三数均含地铁与公交支出。';
-      cbNote+='旧规则成本按当月满 70 元后 9 折计算。';
+      if(oldMissing) cbNote+='未填写旧票价，无法计算调价前成本。';
+      else cbNote+='旧规则成本按当月满 70 元后 9 折计算。';
       $('cbNote').textContent=cbNote;
     }
     /* 第二段：仅当省钱够多（≥20元/月）才显示；省钱少则整段不显示 */

@@ -294,6 +294,27 @@ section('9. 平价判定 · 浮点噪声不应被当成差额');
   report('浮点噪声不应触发"刷码更省"', !(r2.bestPass.total > r2.payg.total + 0.05) ? 'ok' : d.toExponential(3), 'ok');
 }
 
+/* ================= 10. 旧价缺失的渲染层屏蔽（第6轮补充） ================= */
+section('10. 旧价缺失 · 渲染层各处都不应输出无效对比');
+
+{
+  const r = MetroCore.calculate({ newFare: 4, oldFare: 0, workDays: 1, busPerDay: 0, busFare: 2, fixedRoutes: [] });
+  report('oldFare=0 → oldCostAll 为0（渲染层应显示—）', r.oldCostAll, 0);
+
+  const r2 = MetroCore.calculate({ newFare: 6, oldFare: 0, workDays: 23, busPerDay: 0, busFare: 2, fixedRoutes: [] });
+  report('oldFare=0 → oldFareMissing 阻止 diffBest 输出', r2.oldFareMissing === true ? 'ok' : 'FAIL', 'ok');
+
+  // 正常旧价时这些字段必须正常
+  const r3 = MetroCore.calculate({ newFare: 6, oldFare: 4, workDays: 22, busPerDay: 0, busFare: 2, fixedRoutes: [] });
+  report('oldFare=4 → oldCostAll 正常', r3.oldCostAll.toFixed(1), 165.6);
+  report('oldFare=4 → diffBest 正常', r3.diffBest.toFixed(1), 44.4);
+
+  // 源码层面确认三处已加 oldMissing 分支
+  report('费用参照用 oldMissing 屏蔽', html.includes("oldMissing?'—':money(result.oldCostAll)") ? 'ok' : 'FAIL', 'ok');
+  report('单程对比用三元屏蔽0', html.includes("(input.oldFare>0)?input.oldFare:'—'") ? 'ok' : 'FAIL', 'ok');
+  report('推荐语有 oldMissing 分支', html.includes('if(oldMissing){') ? 'ok' : 'FAIL', 'ok');
+}
+
 /* ================= 汇总 ================= */
 console.log('\n' + '='.repeat(70));
 console.log(`结果：${pass} 项通过，${fail} 项失败`);
