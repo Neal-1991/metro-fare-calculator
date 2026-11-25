@@ -66,3 +66,6 @@ q123*.py
 q2_*.py
 qr_size_check.py
 .workbuddy/
+
+# 冗余副本（内容与 page.html 完全相同，发布时由脚本同步）
+地铁通勤测算_v4.html
