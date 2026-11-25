@@ -1,0 +1,68 @@
+# ============ 核心交付物（提交） ============
+# page.html           主程序（唯一源文件）
+# regression.test.js  回归测试
+# *.md                文档
+# index.html          线上入口（与 page.html 同步）
+
+# ============ 忽略：临时与中间产物 ============
+# AI 验证过程文件
+_codex_*.log
+_codex_*.md
+.codex_tmp/
+.codex_test/
+_p*.md
+_r*.log
+
+# 历史一次性脚本（保留在本地，不入库）
+act_date.py
+analyze*.py
+bus_fix.py
+check*.py
+demo*.js
+fare_*.py
+fetch_page.py
+final_check.py
+full_chain.py
+hole*.py
+margin*.py
+rule_check*.py
+test*.py
+test*.js
+verify*.py
+verify*.js
+v3_*.js
+v4_*.js
+v3_qr_*.py
+v3_qr_*.txt
+v3_qr_*.png
+official_*.txt
+official_main.js
+cli_models.json
+model_ids.json
+metro_data.json
+fetched_*.json
+
+# 备份
+*.bak
+*.bak-*
+*.backup*
+_*.js
+_*.md
+
+# 系统与编辑器
+Thumbs.db
+.DS_Store
+desktop.ini
+.vscode/
+.idea/
+
+# WorkBuddy 内部
+.workbuddy/memory/
+.wbapp_*.genie
+
+# 探测类一次性脚本
+probe_*.py
+q123*.py
+q2_*.py
+qr_size_check.py
+.workbuddy/

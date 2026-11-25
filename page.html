@@ -1,0 +1,1718 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e2340">
+<meta name="description" content="算算上海地铁新票价让你每月多花多少，买计次票能省多少。输入通勤路线，30 秒出结果。">
+<meta property="og:title" content="上海地铁涨价，你每月多花多少？">
+<meta property="og:description" content="输入通勤路线，30 秒算出涨价影响和最优购票方案。">
+<meta property="og:type" content="website">
+<title>上海地铁通勤成本测算</title>
+<style>
+:root{
+  --navy:#0e2340;
+  --blue:#2563c9;
+  --red:#c5342a;
+  --green:#0a8f5b;
+  --ink:#172235;
+  --muted:#5d6a7c;
+  --line:#dfe5ec;
+  --soft:#f3f6f9;
+  --card:#ffffff;
+  --blue-soft:#f0f5fc;
+  --red-soft:#fcf2f1;
+  --green-soft:#edf8f3;
+  --shadow:0 1px 2px rgba(14,35,64,.04),0 10px 30px rgba(14,35,64,.055);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{color-scheme:light;scroll-behavior:smooth}
+body{margin:0;background:var(--soft);color:var(--ink);font:15px/1.65 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+button,input{font:inherit}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.45}
+[hidden]{display:none!important}
+.wrap{width:100%;max-width:880px;margin:0 auto;padding-left:16px;padding-right:16px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.num{font-variant-numeric:tabular-nums}
+.hero{background:var(--navy);color:#fff;padding:30px 0 32px;margin-bottom:18px}
+.eyebrow{margin:0 0 8px;font-size:12px;font-weight:650;letter-spacing:.12em;text-transform:uppercase;opacity:.72}
+.hero h1{margin:0;font-size:26px;line-height:1.3;letter-spacing:.02em}
+.hero .subtitle{margin:9px 0 0;color:#d5deea;font-size:14px}
+.hero .privacy{margin:18px 0 0;padding-top:15px;border-top:1px solid rgba(255,255,255,.16);color:#aebed1;font-size:12px}
+.card{background:var(--card);border:1px solid #e8edf2;border-radius:14px;box-shadow:var(--shadow);padding:20px 16px;margin-bottom:16px}
+.section-head{margin-bottom:20px}
+.section-head h2,.card-title{margin:0;color:var(--navy);font-size:19px;line-height:1.4}
+.section-head p:not(.eyebrow){margin:5px 0 0;color:var(--muted);font-size:13px}
+.field{min-width:0}
+.field>label,.field-label{display:block;margin-bottom:7px;color:#344256;font-size:13px;font-weight:650}
+input[type="text"],input[type="number"]{width:100%;min-height:48px;border:1px solid #cfd8e3;border-radius:9px;background:#fff;color:var(--ink);padding:10px 12px;outline:none;font-variant-numeric:tabular-nums;transition:border-color .15s,box-shadow .15s}
+input[type="text"]:focus,input[type="number"]:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,201,.11)}
+input::placeholder{color:#8b96a6}
+.route-grid{display:grid;grid-template-columns:minmax(0,1fr) 46px minmax(0,1fr);gap:8px;align-items:end}
+.swap{width:46px;height:48px;border:1px solid #cfd8e3;border-radius:9px;background:#fff;color:var(--navy);font-size:22px;line-height:1}
+.swap:hover{background:var(--soft)}
+.route-status{min-height:22px;margin:9px 0 0;color:var(--muted);font-size:12px}
+.route-status.error{color:var(--red)}
+.fare-editor{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px;padding:14px 12px;background:var(--soft);border-radius:10px}
+.fare-editor .field>label{font-size:12px}
+.fare-editor input{min-height:44px;background:#fff;padding:8px}
+.distance-value{display:flex;align-items:center;min-height:44px;color:var(--navy);font-size:17px;font-weight:750;font-variant-numeric:tabular-nums}
+.field-note{margin:8px 0 0;color:var(--muted);font-size:12px}
+.fare-note-link{color:var(--blue);font-weight:650;text-decoration:none}
+a.fare-note-link:hover{text-decoration:underline}
+button.fare-note-link{border:0;background:none;padding:0;font:inherit;cursor:pointer;text-decoration:underline}
+.divider{height:1px;background:var(--line);margin:20px 0}
+.settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 12px}
+.input-unit{position:relative}
+.input-unit input{padding-right:38px}
+.input-unit span{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px;pointer-events:none}
+.help{display:block;margin-top:6px;color:var(--muted);font-size:12px;line-height:1.5}
+.bus-note{margin:16px 0 0;padding:11px 12px;border-left:3px solid var(--blue);border-radius:0 8px 8px 0;background:var(--blue-soft);color:#344b68;font-size:12.5px}
+.optional{border-top:1px solid var(--line);margin-top:20px;padding-top:18px}
+.optional-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.optional-title strong{display:block;color:var(--navy);font-size:14px}
+.optional-title span{display:block;margin-top:2px;color:var(--muted);font-size:12px}
+.text-btn{min-height:44px;border:0;background:transparent;color:var(--blue);padding:8px 0 8px 8px;font-size:13px;font-weight:650;white-space:nowrap}
+.fixed-body{padding-top:14px}
+.fixed-item{margin-top:12px;padding:14px 12px;border:1px solid var(--line);border-radius:11px;background:#fbfcfd}
+.fixed-item-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.fixed-item-head strong{color:var(--navy);font-size:13px}
+.remove-btn{min-width:44px;min-height:36px;border:0;background:transparent;color:var(--red);font-size:12px}
+.fixed-item .route-status{margin-bottom:10px}
+.fixed-settings{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fixed-empty{margin:8px 0;color:var(--muted);font-size:13px}
+.add-fixed{width:100%;min-height:46px;margin-top:12px;border:1px dashed #aebdce;border-radius:9px;background:#fff;color:var(--blue);font-weight:650}
+.scattered{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:20px;padding-top:18px;border-top:1px solid var(--line)}
+.scattered-copy strong{display:block;color:var(--navy);font-size:14px}
+.scattered-copy span{display:block;margin-top:3px;color:var(--muted);font-size:12px}
+.segmented{display:flex;flex:none;padding:3px;border:1px solid var(--line);border-radius:9px;background:var(--soft)}
+.segmented label{position:relative}
+.segmented input{position:absolute;opacity:0;pointer-events:none}
+.segmented span{display:flex;align-items:center;justify-content:center;min-height:38px;padding:0 12px;border-radius:6px;color:var(--muted);font-size:13px;cursor:pointer}
+.segmented input:checked+span{background:#fff;color:var(--navy);font-weight:700;box-shadow:0 1px 4px rgba(14,35,64,.12)}
+.segmented input:focus-visible+span{outline:2px solid var(--blue);outline-offset:2px}
+.fare-result{overflow:hidden}
+.result-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.result-top .eyebrow{color:var(--muted);opacity:1}
+.change-badge{flex:none;padding:3px 8px;border-radius:5px;background:var(--red-soft);color:var(--red);font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+.change-badge.down{background:var(--green-soft);color:var(--green)}
+.fare-compare{display:flex;align-items:center;gap:22px;margin:12px 0 22px}
+.fare-block span{display:block;color:var(--muted);font-size:12px}
+.fare-block strong{display:block;margin-top:3px;color:var(--navy);font-size:38px;line-height:1.2;font-weight:780;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+.fare-block strong small{margin-left:3px;font-size:14px;font-weight:550;letter-spacing:0}
+.fare-block.new strong{color:var(--red)}
+.fare-arrow{color:#8b96a6;font-size:25px}
+.kpi{border-top:1px solid var(--line);padding-top:18px}
+.kpi-label{color:#344256;font-size:14px;font-weight:650}
+.kpi-line{display:flex;align-items:baseline;gap:7px;margin-top:3px}
+.kpi-value{color:var(--red);font-size:44px;line-height:1.2;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.035em}
+.kpi-value.down{color:var(--green)}
+.kpi-unit{color:var(--navy);font-size:17px;font-weight:650}
+.kpi-year{margin:4px 0 0;color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums}
+.formula-note{margin:12px 0 0;color:#758194;font-size:11.5px}
+.recommendation{border-top:3px solid var(--green)}
+.recommendation .eyebrow{color:var(--green);opacity:1}
+.recommendation-title{margin:9px 0 0;color:var(--navy);font-size:23px;line-height:1.45;font-weight:750}
+.recommendation-title strong{color:var(--green)}
+.recommendation-saving{margin:8px 0 0;color:var(--green);font-size:15px;font-weight:650;font-variant-numeric:tabular-nums}
+.cost-breakdown{margin:14px 0 0;padding:12px 14px;border-radius:10px;background:var(--soft);border:1px solid var(--line)}
+.cost-breakdown-title{margin:0 0 10px;color:var(--muted);font-size:12px;font-weight:650;letter-spacing:.04em}
+.cost-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.cost-col{text-align:center;padding:8px 4px;border-radius:8px;background:#fff;border:1px solid var(--line)}
+.cost-col.highlight{background:var(--green-soft);border-color:#bfe8d4}
+.cost-col-label{display:block;color:var(--muted);font-size:11.5px;margin-bottom:3px}
+.cost-col strong{color:var(--navy);font-size:19px;font-weight:750;font-variant-numeric:tabular-nums}
+.cost-col.highlight strong{color:var(--green)}
+.cost-col small{color:var(--muted);font-size:11px;margin-left:1px}
+.cost-breakdown-note{margin:10px 0 0;color:var(--muted);font-size:12px;line-height:1.6}
+.recommendation-detail{margin:5px 0 0;color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+.other-plans{margin-top:18px;border-top:1px solid var(--line)}
+.other-plans summary{display:flex;align-items:center;justify-content:space-between;min-height:52px;color:var(--blue);font-size:13px;font-weight:650;cursor:pointer;list-style:none}
+.other-plans summary::-webkit-details-marker{display:none}
+.other-plans summary::after{content:"+";font-size:20px;font-weight:400}
+.other-plans[open] summary::after{content:"−"}
+.table-scroll{overflow-x:auto;padding-bottom:2px}
+table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+th,td{padding:11px 7px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{color:var(--muted);font-size:11px;font-weight:650;background:var(--soft)}
+th:first-child,td:first-child{text-align:left}
+tbody tr.best{background:var(--green-soft)}
+.plan-name{font-weight:700;color:var(--navy)}
+.best-tag{display:inline-block;margin-left:5px;padding:1px 5px;border-radius:4px;background:var(--green);color:#fff;font-size:10px;vertical-align:1px}
+.cell-note{display:block;color:var(--muted);font-size:10.5px;font-weight:400;white-space:normal}
+.saving-text{color:var(--green);font-weight:650}
+.cost-text{color:var(--red)}
+.table-note{margin:10px 0 0;color:var(--muted);font-size:11px}
+.notice-list{display:grid;gap:12px}
+.notice{display:grid;grid-template-columns:28px 1fr;gap:10px;padding:13px 12px;border-radius:9px;background:var(--soft)}
+.notice-index{padding-top:1px;color:#8190a3;font-size:11px;font-weight:750;font-variant-numeric:tabular-nums;letter-spacing:.06em}
+.notice p{margin:0;color:#3e4b5e;font-size:13px;line-height:1.75}
+.notice strong{color:var(--navy)}
+.notice.bus{background:var(--blue-soft)}
+.notice.bus strong{color:var(--blue)}
+.share-card{max-width:520px;margin:22px auto 16px;padding:26px 22px 20px;border-radius:14px;background:var(--navy);color:#fff;box-shadow:0 14px 32px rgba(14,35,64,.16)}
+.share-title{margin:0;font-size:15px;font-weight:650;letter-spacing:.08em}
+.share-label{margin:30px 0 0;color:#bdcadb;font-size:14px}
+.share-number{margin:2px 0 0;font-size:48px;line-height:1.2;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.035em}
+.share-number small{margin-left:5px;font-size:16px;font-weight:550;letter-spacing:0}
+.share-pass{margin:12px 0 0}
+.share-plan{margin:0;color:#d5deea;font-size:14px}
+.share-save{margin:8px 0 0;color:#fff;font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+.share-save-year{margin:5px 0 0;color:#9fe0c3;font-size:13.5px;font-weight:650;font-variant-numeric:tabular-nums}
+.share-waste{margin:8px 0 0;color:#f0c9a0;font-size:12px;line-height:1.6;font-weight:500}
+.share-bottom{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-top:26px;padding-top:18px;border-top:1px solid rgba(255,255,255,.16)}
+.share-hook{margin:0;color:#d5deea;font-size:12.5px}
+.qr-box{display:flex;align-items:center;justify-content:center;flex:none;width:152px;height:152px;border-radius:8px;background:#fff}
+.qr-box canvas{display:block;width:140px;height:140px;image-rendering:pixelated}
+.share-url{margin:12px 0 0;color:#8ea2ba;font-size:11.5px;letter-spacing:.02em;text-align:right;font-variant-numeric:tabular-nums;word-break:break-all}
+.risk-list{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:8px}
+.risk-item{display:flex;gap:8px;align-items:flex-start;padding:10px 12px;border-radius:8px;background:#fbf3e4;color:#a8681a;font-size:13px;line-height:1.55}
+.risk-icon{flex:none;font-size:12px;line-height:1.7}
+.share-footer{margin:16px 0 0;color:#91a4bc;font-size:10.5px;text-align:right}
+.share-privacy{margin:-4px 0 22px;color:var(--muted);font-size:11px;text-align:center}
+.share-actions{max-width:520px;margin:0 auto 16px;text-align:center}
+.share-tip{margin:0 0 12px;color:#3e4b5e;font-size:13px;line-height:1.6}
+.btn-save-image{display:inline-flex;align-items:center;justify-content:center;width:100%;min-height:50px;padding:0 24px;border:none;border-radius:10px;background:var(--navy);color:#fff;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s}
+.btn-save-image:hover{background:#1b3f6e}
+.btn-save-image:active{transform:scale(.985)}
+.image-preview{max-width:520px;margin:0 auto 18px;padding:16px;border-radius:12px;background:#f7f9fc;border:1px solid var(--line);text-align:center}
+.image-preview-tip{margin:0 0 12px;color:var(--green);font-size:14px;font-weight:650;line-height:1.6}
+.image-preview img{display:block;width:100%;height:auto;border-radius:8px;box-shadow:0 4px 16px rgba(14,35,64,.12)}
+.btn-close-preview{margin-top:12px;padding:9px 22px;border:1px solid #cfd8e3;border-radius:8px;background:#fff;color:#3e4b5e;font-size:13.5px;cursor:pointer;font-family:inherit}
+.footer{padding:4px 16px 34px;color:#758194;font-size:11px;line-height:1.8;text-align:center}
+.empty-state{padding:34px 20px;text-align:center;color:var(--muted)}
+.empty-title{margin:0 0 8px;color:var(--navy);font-size:17px;font-weight:700}
+.empty-desc{margin:0;color:var(--muted);font-size:13.5px;line-height:1.7}
+button:focus-visible,summary:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+/* v4：站点选择弹层 */
+.station-overlay{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center;background:rgba(14,35,64,.45);overscroll-behavior:contain}
+.station-panel{display:flex;flex-direction:column;width:100%;height:100vh;height:100dvh;max-height:100dvh;overflow:hidden;background:#fff;transform:translateY(100%);transition:transform .2s ease-out}
+.station-panel.open{transform:translateY(0)}
+.station-head{display:flex;align-items:center;justify-content:space-between;flex:none;padding:12px 16px}
+.station-title{color:var(--navy);font-size:16px;font-weight:750}
+.station-close{width:44px;height:44px;margin-right:-12px;border:0;background:transparent;color:#5d6a7c;font-size:24px;line-height:1}
+.station-close:hover{color:var(--navy)}
+.station-search{position:relative;flex:none;margin:0 16px 12px}
+.station-search-icon{position:absolute;left:12px;top:50%;width:16px;height:16px;margin-top:-8px;pointer-events:none}
+.station-search-icon::before{content:"";position:absolute;left:0;top:0;width:11px;height:11px;border:2px solid #8b96a6;border-radius:50%}
+.station-search-icon::after{content:"";position:absolute;right:-1px;bottom:0;width:7px;height:2px;border-radius:1px;background:#8b96a6;transform:rotate(45deg)}
+#stationSearch{padding-left:40px}
+.station-body{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 16px calc(20px + env(safe-area-inset-bottom))}
+.station-group{margin:8px 0 10px;color:var(--muted);font-size:12px;font-weight:650}
+.station-hot{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.station-chip{min-height:44px;border:0;border-radius:8px;background:var(--soft);color:var(--ink);font-size:13.5px;padding:0 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.station-chip:active{background:#e6ebf1}
+.station-results{display:flex;flex-direction:column}
+.station-result{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;border:0;border-bottom:1px solid var(--line);background:transparent;padding:0 2px;text-align:left;font-size:15px;color:var(--ink)}
+.station-result:last-child{border-bottom:0}
+.station-result .station-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.station-result .lines{flex:none;color:#8b96a6;font-size:11.5px}
+.station-empty{margin:28px 0 12px;color:var(--muted);font-size:14px;text-align:center}
+/* v4：KPI 两段式 */
+.kpi-stage2{margin-top:16px;padding-top:14px;border-top:1px dashed var(--line)}
+.kpi-label2{color:#344256;font-size:14px;font-weight:650}
+.kpi-check{margin-right:5px;color:var(--green);font-weight:800}
+.kpi-best-prefix{color:var(--navy);font-size:15px;font-weight:650}
+.kpi-best{color:var(--navy);font-size:28px;line-height:1.25;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+.kpi-saving{margin:6px 0 0;color:var(--green);font-size:15px;font-weight:650;font-variant-numeric:tabular-nums}
+.kpi-saving.weak{color:#a8681a}
+.kpi-note{margin:10px 0 0;color:var(--muted);font-size:13px}
+@media (min-width:640px){
+  .station-overlay{align-items:center;padding:24px}
+  .station-panel{width:100%;max-width:480px;height:auto;max-height:80vh;border-radius:14px;box-shadow:0 18px 44px rgba(14,35,64,.24);transform:translateY(18px);opacity:0;transition:transform .2s ease-out,opacity .2s ease-out}
+  .station-panel.open{transform:translateY(0);opacity:1}
+}
+@media (min-width:640px){
+  .wrap{padding-left:24px;padding-right:24px}
+  .hero{padding:38px 0 40px;margin-bottom:24px}
+  .hero h1{font-size:31px}
+  .card{padding:26px 28px;margin-bottom:20px;border-radius:16px}
+  .settings-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+  .fare-editor{padding:16px;gap:16px}
+  .fare-compare{gap:34px}
+  .fare-block strong{font-size:44px}
+  .kpi-value{font-size:52px}
+  .recommendation-title{font-size:26px}
+}
+@media (max-width:380px){
+  .wrap{padding-left:12px;padding-right:12px}
+  .card{padding-left:13px;padding-right:13px}
+  .route-grid{grid-template-columns:minmax(0,1fr) 42px minmax(0,1fr);gap:6px}
+  .swap{width:42px}
+  .fare-editor{gap:7px;padding:12px 9px}
+  .fare-editor input{padding-left:7px;padding-right:7px}
+  .scattered{align-items:flex-start;flex-direction:column}
+  .fare-compare{gap:16px}
+  .kpi-value{font-size:39px}
+  .qr-box{width:128px;height:128px}
+  .qr-box canvas{width:116px;height:116px}
+}
+@media print{
+  body{background:#fff}
+  .hero,.input-card,.other-plans,.share-privacy,.footer,.share-actions,.image-preview{display:none!important}
+  .wrap{max-width:none;padding:0}
+  .card{box-shadow:none;break-inside:avoid}
+  .share-card{box-shadow:none}
+}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Shanghai Metro · 2026</p>
+    <h1>上海地铁通勤成本测算</h1>
+    <p class="subtitle">把票价、满额优惠与公交接驳算在一起，给你一个明确结论。</p>
+    <p class="privacy">新规则自 2026-12-01 起适用 · 所有计算均在本机完成</p>
+  </div>
+</header>
+<main class="wrap">
+  <section class="card input-card" aria-labelledby="inputTitle">
+    <div class="section-head">
+      <p class="eyebrow">01 · 通勤设定</p>
+      <h2 id="inputTitle">你的每月固定行程</h2>
+      <p>选择站点后自动按线网最短里程反算票价，也可手动修改。</p>
+    </div>
+
+    <div class="route-grid">
+      <div class="field">
+        <label for="from">主通勤起点</label>
+        <input id="from" type="text" value="" placeholder="点击选择站点" autocomplete="off" readonly aria-haspopup="dialog">
+      </div>
+      <button id="swap" class="swap" type="button" aria-label="交换起点和终点" title="交换起终点">↔</button>
+      <div class="field">
+        <label for="to">主通勤终点</label>
+        <input id="to" type="text" value="" placeholder="点击选择站点" autocomplete="off" readonly aria-haspopup="dialog">
+      </div>
+    </div>
+    <p id="routeStatus" class="route-status" role="status"></p>
+
+    <div class="fare-editor">
+      <div class="field">
+        <span class="field-label">最短里程</span>
+        <div id="distance" class="distance-value">—</div>
+      </div>
+      <div class="field">
+        <label for="oldFare">旧单程票价</label>
+        <input id="oldFare" type="number" min="0" max="99" step="1" inputmode="numeric" aria-label="旧单程票价，元">
+      </div>
+      <div class="field">
+        <label for="newFare">新单程票价</label>
+        <input id="newFare" type="number" min="1" max="99" step="1" inputmode="numeric" aria-label="新单程票价，元">
+      </div>
+    </div>
+    <p id="fareMode" class="field-note">票价按线网里程自动反算，可能与实际扣费差 ±1 元，以实际扣费为准。<a class="fare-note-link" href="https://service.shmetro.com/yygg/5747.htm" target="_blank" rel="noopener">用官方查询核对 →</a></p>
+
+    <div class="divider"></div>
+    <div class="settings-grid">
+      <div class="field">
+        <label for="workDays">每月通勤天数</label>
+        <div class="input-unit"><input id="workDays" type="number" value="23" min="1" max="31" step="1" inputmode="numeric"><span>天</span></div>
+        <small class="help">每天往返算 2 次</small>
+      </div>
+      <div class="field">
+        <label for="busPerDay">每天公交接驳次数</label>
+        <div class="input-unit"><input id="busPerDay" type="number" value="0" min="0" max="2" step="1" inputmode="numeric"><span>次</span></div>
+        <small class="help">可选 0 / 1 / 2 次</small>
+      </div>
+      <div class="field">
+        <label for="busFare">公交单程票价</label>
+        <div class="input-unit"><input id="busFare" type="number" value="2" min="0" max="50" step="0.5" inputmode="decimal"><span>元</span></div>
+        <small class="help">刷码联乘优惠为 1 元/次</small>
+      </div>
+    </div>
+    <p class="bus-note">公交接驳会改变结论：计次票不与公交换乘优惠同享，计次票方案中的公交费用按全价计算。</p>
+
+    <div class="optional">
+      <div class="optional-head">
+        <div class="optional-title">
+          <strong>固定线路 <span id="fixedCount" class="num"></span></strong>
+          <span>如每周去父母家，最多 3 条；计入成本</span>
+        </div>
+        <button id="fixedToggle" class="text-btn" type="button" aria-expanded="false" aria-controls="fixedBody">+ 添加固定线路</button>
+      </div>
+      <div id="fixedBody" class="fixed-body" hidden>
+        <p id="fixedEmpty" class="fixed-empty">添加后选择起终点，并填写每月乘坐次数。</p>
+        <div id="fixedList"></div>
+        <button id="addFixed" class="add-fixed" type="button">+ 添加一条固定线路</button>
+      </div>
+    </div>
+
+    <div class="scattered">
+      <div class="scattered-copy">
+        <strong>零散出行</strong>
+        <span>不进金额计算，只提供用票提示</span>
+      </div>
+      <div class="segmented" role="radiogroup" aria-label="是否有零散出行">
+        <label><input type="radio" name="scattered" value="no" checked><span>基本没有</span></label>
+        <label><input type="radio" name="scattered" value="yes"><span>有</span></label>
+      </div>
+    </div>
+  </section>
+
+  <div id="emptyState" class="card empty-state">
+    <p class="empty-title">先选你的通勤起终点</p>
+    <p class="empty-desc">选好起点和终点，马上算出涨价影响和最优购票方案。</p>
+  </div>
+
+  <div id="results" hidden>
+    <section class="card fare-result" aria-labelledby="compareTitle">
+      <div class="result-top">
+        <div>
+          <p class="eyebrow">02 · 新旧票价对比</p>
+          <h2 id="compareTitle" class="card-title">单程票价</h2>
+        </div>
+        <span id="changeBadge" class="change-badge">—</span>
+      </div>
+      <div class="fare-compare">
+        <div class="fare-block"><span>2005 旧规则</span><strong><span id="oldFareBig">—</span><small>元</small></strong></div>
+        <span class="fare-arrow" aria-hidden="true">→</span>
+        <div class="fare-block new"><span>2026 新规则</span><strong><span id="newFareBig">—</span><small>元</small></strong></div>
+      </div>
+      <div class="kpi" aria-live="polite">
+        <div id="kpiLabel" class="kpi-label">不买卡，你每月多花</div>
+        <div class="kpi-line"><span id="kpiMonth" class="kpi-value">—</span><span class="kpi-unit">元</span></div>
+        <div id="kpiStage2" class="kpi-stage2" hidden>
+          <div id="kpiLabel2" class="kpi-label2">按建议买 45 次票后</div>
+          <div class="kpi-line"><span id="kpiBestPrefix" class="kpi-best-prefix">多花</span><span id="kpiBest" class="kpi-best">—</span><span class="kpi-unit">元</span></div>
+          <p id="kpiSaving" class="kpi-saving">—</p>
+        </div>
+        <p id="kpiNote" class="kpi-note" hidden>（你的票价，买计次票反而不划算）</p>
+        <p id="kpiYear" class="kpi-year">—</p>
+        <p class="formula-note">第一段按“新规则直接刷码 − 旧规则成本”算涨价影响；第二段按“新规则直接刷码 − 最优方案”算买卡可省多少。旧规则不含公交。</p>
+      </div>
+    </section>
+
+    <section class="card recommendation" aria-labelledby="recommendationLabel">
+      <p id="recommendationLabel" class="eyebrow">03 · 最建议方案</p>
+      <h2 id="recommendationTitle" class="recommendation-title" aria-live="polite">—</h2>
+      <p id="recommendationSaving" class="recommendation-saving"></p>
+      <p id="recommendationDetail" class="recommendation-detail"></p>
+      <div id="costBreakdown" class="cost-breakdown" hidden>
+        <p class="cost-breakdown-title">费用参照</p>
+        <div class="cost-cols">
+          <div class="cost-col"><span class="cost-col-label">调价前</span><strong id="cbOld">—</strong><small>元</small></div>
+          <div class="cost-col"><span class="cost-col-label">新规刷码</span><strong id="cbPayg">—</strong><small>元</small></div>
+          <div class="cost-col highlight"><span id="cbBestLabel" class="cost-col-label">买票后</span><strong id="cbBest">—</strong><small>元</small></div>
+        </div>
+        <p id="cbNote" class="cost-breakdown-note"></p>
+      </div>
+      <ul id="riskList" class="risk-list" hidden></ul>
+      <details class="other-plans">
+        <summary>展开看其他方案</summary>
+        <div class="table-scroll">
+          <table>
+            <caption class="sr-only">直接刷码与四档计次票的月成本对比</caption>
+            <thead><tr><th scope="col">方案</th><th scope="col">月成本 / 元</th><th scope="col">较刷码</th><th scope="col">计次票使用</th></tr></thead>
+            <tbody id="planRows"></tbody>
+          </table>
+        </div>
+        <p class="table-note">月成本含地铁与公交；计次票含溢出刷码。满额优惠按行程顺序逐笔累计。</p>
+      </details>
+    </section>
+
+    <section class="card" aria-labelledby="noticeTitle">
+      <div class="section-head" style="margin-bottom:14px">
+        <p class="eyebrow">04 · 通勤提醒</p>
+        <h2 id="noticeTitle">还需要留意这些</h2>
+      </div>
+      <div id="noticeList" class="notice-list"></div>
+    </section>
+
+    <section class="share-card" aria-label="上海地铁涨价分享卡">
+      <h2 class="share-title">上海地铁涨价</h2>
+      <p id="shareLabel" class="share-label">我每月要多花</p>
+      <div id="shareNumber" class="share-number">—<small>元</small></div>
+      <div id="sharePassLines" class="share-pass" hidden>
+        <p id="sharePassPlan" class="share-plan"></p>
+        <p class="share-save">每月省 <span id="shareSaveMonth"></span> 元</p>
+        <p class="share-save-year">一年省约 <span id="shareSaveYear"></span> 元</p>
+        <p id="shareWasteNote" class="share-waste" hidden></p>
+      </div>
+      <div class="share-bottom">
+        <p id="shareHook" class="share-hook">扫码算算你每月花多少钱</p>
+        <div class="qr-box"><canvas id="qrCanvas" width="328" height="328" role="img" aria-label="测算页面二维码"></canvas></div>
+      </div>
+      <p class="share-url">扫码打开 · 链接需完整分享码</p>
+      <p class="share-footer">基于 2026-12-01 规则 · 仅供参考</p>
+    </section>
+
+    <div class="share-actions">
+      <p class="share-tip">保存这张图发朋友圈，朋友扫码就能算自己的</p>
+      <button id="btnSaveImage" class="btn-save-image" type="button">保存图片</button>
+    </div>
+
+    <div id="imagePreview" class="image-preview" hidden>
+      <p class="image-preview-tip">长按上方图片保存到相册，然后发朋友圈</p>
+      <img id="previewImg" alt="地铁通勤测算分享图">
+      <button id="btnClosePreview" class="btn-close-preview" type="button">关闭</button>
+    </div>
+
+    <p class="share-privacy">分享卡不包含起终点，可放心分享。</p>
+  </div>
+</main>
+<footer class="footer">
+  413 站 · 505 条边 · 19 条线路<br>
+  自然月累计满 90 元后 9 折；计次票按票价降序分配，溢出行程重新累计优惠。
+</footer>
+
+<div id="stationOverlay" class="station-overlay" hidden>
+  <div id="stationPanel" class="station-panel" role="dialog" aria-modal="true" aria-labelledby="stationTitle">
+    <div class="station-head">
+      <span id="stationTitle" class="station-title">选择站点</span>
+      <button id="stationClose" class="station-close" type="button" aria-label="关闭选择面板">×</button>
+    </div>
+    <div class="station-search">
+      <span class="station-search-icon" aria-hidden="true"></span>
+      <input id="stationSearch" type="text" placeholder="输入站名，如 人民广场" autocomplete="off">
+    </div>
+    <div class="station-body">
+      <p id="stationHotLabel" class="station-group">换乘大站</p>
+      <div id="stationHot" class="station-hot"></div>
+      <div id="stationResults" class="station-results" hidden></div>
+      <p id="stationEmpty" class="station-empty" hidden>未找到该站</p>
+    </div>
+  </div>
+</div>
+
+<script id="metroData" type="application/json">{"names": ["莘庄", "外环路", "莲花路", "锦江乐园", "上海南站", "漕宝路", "上海体育馆", "徐家汇", "衡山路", "常熟路", "陕西南路", "一大会址·黄陂南路", "人民广场", "新闸路", "汉中路", "上海火车站", "中山北路", "延长路", "上海马戏城", "汶水路", "彭浦新村", "共康路", "通河新村", "呼兰路", "共富新村", "宝安公路", "友谊西路", "富锦路", "蟠祥路·国家会计学院", "国家会展中心", "虹桥火车站", "虹桥2号航站楼", "淞虹路", "北新泾", "威宁路", "娄山关路", "中山公园", "江苏路", "静安寺", "南京西路", "南京东路", "陆家嘴", "浦东南路", "世纪大道", "上海科技馆", "世纪公园", "龙阳路", "张江高科", "金科路", "广兰路", "唐镇", "创新中路", "华夏东路", "川沙", "凌空路", "远东大道", "海天三路", "浦东1号2号航站楼", "石龙路", "龙漕路", "漕溪路", "宜山路", "虹桥路", "延安西路", "金沙江路", "曹杨路", "镇坪路", "中潭路", "宝山路", "东宝兴路", "虹口足球场", "赤峰路", "大柏树", "江湾镇", "殷高西路", "长江南路", "淞发路", "张华浜", "淞滨路", "水产路", "宝杨路", "友谊路", "铁力路", "江杨北路", "海伦路", "临平路", "大连路", "杨树浦路", "浦东大道", "向城路", "蓝村路", "塘桥", "南浦大桥", "西藏南路", "鲁班路", "大木桥路", "东安路", "上海体育场", "春申路", "银都路", "颛桥", "北桥", "剑川路", "东川路", "金平路", "华宁路", "文井路", "闵行开发区", "江川路", "西渡", "萧塘", "奉浦大道", "环城东路", "望园路", "金海湖", "奉贤新城", "东方体育中心", "灵岩南路", "上南路", "华夏西路", "高青路", "东明路", "高科西路", "临沂新村", "上海儿童医学中心", "浦电路", "源深体育中心", "民生路", "北洋泾路", "德平路", "云山路", "金桥路", "博兴路", "五莲路", "巨峰路", "东靖路", "五洲大道", "洲海路", "外高桥保税区南", "航津路", "外高桥保税区北", "港城路", "美兰湖", "罗南新村", "潘广路", "刘行", "顾村公园", "祁华路", "上海大学", "南陈路", "上大路", "场中路", "大场镇", "行知路", "大华三路", "新村路", "岚皋路", "长寿路", "昌平路", "肇嘉浜路", "龙华中路", "后滩", "长清路", "耀华路", "云台路", "杨高南路", "锦绣路", "芳华路", "花木路", "沈杜公路", "联航路", "江月路", "浦江镇", "芦恒路", "凌兆新村", "杨思", "成山路", "中华艺术宫", "陆家浜路", "老西门", "大世界", "曲阜路", "中兴路", "西藏北路", "曲阳路", "四平路", "鞍山新村", "江浦路", "黄兴路", "延吉中路", "黄兴公园", "翔殷路", "嫩江路", "市光路", "上海松江站", "醉白池", "松江体育中心", "松江新城", "松江大学城", "洞泾", "佘山", "泗泾", "九亭", "中春路", "七宝", "星中路", "合川路", "漕河泾开发区", "桂林路", "嘉善路", "打浦桥", "马当路", "小南门", "商城路", "杨高中路", "芳甸路", "蓝天路", "台儿庄路", "金桥", "金吉路", "金海路", "顾唐路", "民雷路", "曹路", "航中路", "紫藤路", "龙柏新村", "虹桥1号航站楼", "上海动物园", "龙溪路", "水城路", "伊犁路", "宋园路", "交通大学", "上海图书馆", "一大会址·新天地", "豫园", "天潼路", "四川北路", "邮电新村", "同济大学", "国权路", "五角场", "江湾体育场", "三门路", "殷高东路", "新江湾城", "国帆路", "双江路", "高桥西", "高桥", "基隆路", "花桥", "光明路", "兆丰路", "安亭", "上海汽车城", "昌吉东路", "上海赛车场", "嘉定北", "嘉定西", "白银路", "嘉定新城", "马陆", "陈翔公路", "南翔", "桃浦新村", "武威路", "祁连山路", "李子园", "上海西站", "真如", "枫桥路", "隆德路", "上海游泳馆", "龙华", "云锦路", "龙耀路", "三林", "三林东", "浦三路", "康恒路", "御桥", "罗山路", "秀沿路", "康新公路", "迪士尼", "七莘路", "虹莘路", "顾戴路", "东兰路", "虹梅路", "虹漕路", "桂林公园", "国际客运中心", "提篮桥", "江浦公园", "宁国路", "隆昌路", "爱国路", "复兴岛", "东陆路", "杨高北路", "金京路", "申江路", "金运路", "金沙江西路", "丰庄", "祁连山南路", "真北路", "大渡河路", "武宁路", "江宁路", "自然博物馆", "淮海中路", "世博会博物馆", "世博大道", "华鹏路", "下南路", "北蔡", "陈春路", "莲溪路", "华夏中路", "中科路", "学林路", "张江路", "封浜", "乐秀路", "临洮路", "嘉怡路", "定边路", "真新新村", "真光路", "铜川路", "中宁路", "武定路", "源深路", "昌邑路", "歇浦路", "黄杨路", "云顺路", "浦东足球场", "金粤路", "桂桥路", "紫竹高新区", "永德路", "元江路", "双柏路", "曙建路", "景西路", "虹梅南路", "景洪路", "朱梅路", "罗秀路", "华东理工大学", "吴中路", "姚虹路", "红宝石路", "长风公园", "梅岭北路", "武威东路", "古浪路", "祁安路", "南大路", "丰翔路", "锦秋路", "周浦东", "鹤沙航城", "航头东", "新场", "野生动物园", "惠南", "惠南东", "书院", "临港大道", "滴水湖", "蟠龙路", "徐盈路", "徐泾北城", "嘉松中路", "赵巷", "汇金路", "青浦新城", "漕盈路", "淀山湖大道", "朱家角", "东方绿舟", "西岑", "航头", "下沙", "鹤涛路", "沈梅路", "繁荣路", "周浦", "康桥", "北中路", "芳芯路", "迎春路", "丹阳路", "平凉路", "抚顺路", "复旦大学", "上海财经大学", "殷高路", "通南路", "长江西路", "爱辉路", "康文路", "三鲁公路", "闵瑞路", "浦航路", "东城一路", "汇臻路"], "lines": [{"n": "1号线", "c": "#e4022d", "s": ["莘庄", "外环路", "莲花路", "锦江乐园", "上海南站", "漕宝路", "上海体育馆", "徐家汇", "衡山路", "常熟路", "陕西南路", "一大会址·黄陂南路", "人民广场", "新闸路", "汉中路", "上海火车站", "中山北路", "延长路", "上海马戏城", "汶水路", "彭浦新村", "共康路", "通河新村", "呼兰路", "共富新村", "宝安公路", "友谊西路", "富锦路"]}, {"n": "2号线", "c": "#82bf25", "s": ["蟠祥路·国家会计学院", "国家会展中心", "虹桥火车站", "虹桥2号航站楼", "淞虹路", "北新泾", "威宁路", "娄山关路", "中山公园", "江苏路", "静安寺", "南京西路", "人民广场", "南京东路", "陆家嘴", "浦东南路", "世纪大道", "上海科技馆", "世纪公园", "龙阳路", "张江高科", "金科路", "广兰路", "唐镇", "创新中路", "华夏东路", "川沙", "凌空路", "远东大道", "海天三路", "浦东1号2号航站楼"]}, {"n": "3号线", "c": "#fbd704", "s": ["上海南站", "石龙路", "龙漕路", "漕溪路", "宜山路", "虹桥路", "延安西路", "中山公园", "金沙江路", "曹杨路", "镇坪路", "中潭路", "上海火车站", "宝山路", "东宝兴路", "虹口足球场", "赤峰路", "大柏树", "江湾镇", "殷高西路", "长江南路", "淞发路", "张华浜", "淞滨路", "水产路", "宝杨路", "友谊路", "铁力路", "江杨北路"]}, {"n": "4号线", "c": "#471d86", "s": ["上海体育馆", "宜山路", "虹桥路", "延安西路", "中山公园", "金沙江路", "曹杨路", "镇坪路", "中潭路", "上海火车站", "宝山路", "海伦路", "临平路", "大连路", "杨树浦路", "浦东大道", "世纪大道", "向城路", "蓝村路", "塘桥", "南浦大桥", "西藏南路", "鲁班路", "大木桥路", "东安路", "上海体育场"]}, {"n": "5号线", "c": "#934b9a", "s": ["莘庄", "春申路", "银都路", "颛桥", "北桥", "剑川路", "东川路", "金平路", "华宁路", "文井路", "闵行开发区", "江川路", "西渡", "萧塘", "奉浦大道", "环城东路", "望园路", "金海湖", "奉贤新城"]}, {"n": "6号线", "c": "#d30069", "s": ["东方体育中心", "灵岩南路", "上南路", "华夏西路", "高青路", "东明路", "高科西路", "临沂新村", "上海儿童医学中心", "蓝村路", "浦电路", "世纪大道", "源深体育中心", "民生路", "北洋泾路", "德平路", "云山路", "金桥路", "博兴路", "五莲路", "巨峰路", "东靖路", "五洲大道", "洲海路", "外高桥保税区南", "航津路", "外高桥保税区北", "港城路"]}, {"n": "7号线", "c": "#ed6f01", "s": ["美兰湖", "罗南新村", "潘广路", "刘行", "顾村公园", "祁华路", "上海大学", "南陈路", "上大路", "场中路", "大场镇", "行知路", "大华三路", "新村路", "岚皋路", "镇坪路", "长寿路", "昌平路", "静安寺", "常熟路", "肇嘉浜路", "东安路", "龙华中路", "后滩", "长清路", "耀华路", "云台路", "高科西路", "杨高南路", "锦绣路", "芳华路", "龙阳路", "花木路"]}, {"n": "8号线", "c": "#0094d9", "s": ["沈杜公路", "联航路", "江月路", "浦江镇", "芦恒路", "凌兆新村", "东方体育中心", "杨思", "成山路", "耀华路", "中华艺术宫", "西藏南路", "陆家浜路", "老西门", "大世界", "人民广场", "曲阜路", "中兴路", "西藏北路", "虹口足球场", "曲阳路", "四平路", "鞍山新村", "江浦路", "黄兴路", "延吉中路", "黄兴公园", "翔殷路", "嫩江路", "市光路"]}, {"n": "9号线", "c": "#87c8eb", "s": ["上海松江站", "醉白池", "松江体育中心", "松江新城", "松江大学城", "洞泾", "佘山", "泗泾", "九亭", "中春路", "七宝", "星中路", "合川路", "漕河泾开发区", "桂林路", "宜山路", "徐家汇", "肇嘉浜路", "嘉善路", "打浦桥", "马当路", "陆家浜路", "小南门", "商城路", "世纪大道", "杨高中路", "芳甸路", "蓝天路", "台儿庄路", "金桥", "金吉路", "金海路", "顾唐路", "民雷路", "曹路"]}, {"n": "10号线", "c": "#c7afd2", "s": ["航中路", "紫藤路", "龙柏新村", "虹桥火车站", "虹桥2号航站楼", "虹桥1号航站楼", "上海动物园", "龙溪路", "水城路", "伊犁路", "宋园路", "虹桥路", "交通大学", "上海图书馆", "陕西南路", "一大会址·新天地", "老西门", "豫园", "南京东路", "天潼路", "四川北路", "海伦路", "邮电新村", "四平路", "同济大学", "国权路", "五角场", "江湾体育场", "三门路", "殷高东路", "新江湾城", "国帆路", "双江路", "高桥西", "高桥", "港城路", "基隆路"]}, {"n": "11号线", "c": "#851a27", "s": ["花桥", "光明路", "兆丰路", "安亭", "上海汽车城", "昌吉东路", "上海赛车场", "嘉定北", "嘉定西", "白银路", "嘉定新城", "马陆", "陈翔公路", "南翔", "桃浦新村", "武威路", "祁连山路", "李子园", "上海西站", "真如", "枫桥路", "曹杨路", "隆德路", "江苏路", "交通大学", "徐家汇", "上海游泳馆", "龙华", "云锦路", "龙耀路", "东方体育中心", "三林", "三林东", "浦三路", "康恒路", "御桥", "罗山路", "秀沿路", "康新公路", "迪士尼"]}, {"n": "12号线", "c": "#007960", "s": ["七莘路", "虹莘路", "顾戴路", "东兰路", "虹梅路", "虹漕路", "桂林公园", "漕宝路", "龙漕路", "龙华", "龙华中路", "大木桥路", "嘉善路", "陕西南路", "南京西路", "汉中路", "曲阜路", "天潼路", "国际客运中心", "提篮桥", "大连路", "江浦公园", "宁国路", "隆昌路", "爱国路", "复兴岛", "东陆路", "巨峰路", "杨高北路", "金京路", "申江路", "金海路"]}, {"n": "13号线", "c": "#e698be", "s": ["金运路", "金沙江西路", "丰庄", "祁连山南路", "真北路", "大渡河路", "金沙江路", "隆德路", "武宁路", "长寿路", "江宁路", "汉中路", "自然博物馆", "南京西路", "淮海中路", "一大会址·新天地", "马当路", "世博会博物馆", "世博大道", "长清路", "成山路", "东明路", "华鹏路", "下南路", "北蔡", "陈春路", "莲溪路", "华夏中路", "中科路", "学林路", "张江路"]}, {"n": "14号线", "c": "#60601e", "s": ["封浜", "乐秀路", "临洮路", "嘉怡路", "定边路", "真新新村", "真光路", "铜川路", "真如", "中宁路", "曹杨路", "武宁路", "武定路", "静安寺", "一大会址·黄陂南路", "大世界", "豫园", "陆家嘴", "浦东南路", "浦东大道", "源深路", "昌邑路", "歇浦路", "云山路", "蓝天路", "黄杨路", "云顺路", "浦东足球场", "金粤路", "桂桥路"]}, {"n": "15号线", "c": "#baa785", "s": ["紫竹高新区", "永德路", "元江路", "双柏路", "曙建路", "景西路", "虹梅南路", "景洪路", "朱梅路", "罗秀路", "华东理工大学", "上海南站", "桂林公园", "桂林路", "吴中路", "姚虹路", "红宝石路", "娄山关路", "长风公园", "大渡河路", "梅岭北路", "铜川路", "上海西站", "武威东路", "古浪路", "祁安路", "南大路", "丰翔路", "锦秋路", "顾村公园"]}, {"n": "16号线", "c": "#97d0be", "s": ["龙阳路", "华夏中路", "罗山路", "周浦东", "鹤沙航城", "航头东", "新场", "野生动物园", "惠南", "惠南东", "书院", "临港大道", "滴水湖"]}, {"n": "17号线", "c": "#bb786e", "s": ["虹桥火车站", "国家会展中心", "蟠龙路", "徐盈路", "徐泾北城", "嘉松中路", "赵巷", "汇金路", "青浦新城", "漕盈路", "淀山湖大道", "朱家角", "东方绿舟", "西岑"]}, {"n": "18号线", "c": "#c4974d", "s": ["航头", "下沙", "鹤涛路", "沈梅路", "繁荣路", "周浦", "康桥", "御桥", "莲溪路", "北中路", "芳芯路", "龙阳路", "迎春路", "杨高中路", "民生路", "昌邑路", "丹阳路", "平凉路", "江浦公园", "江浦路", "抚顺路", "国权路", "复旦大学", "上海财经大学", "殷高路", "长江南路", "通南路", "长江西路", "爱辉路", "呼兰路", "康文路"]}, {"n": "浦江线", "c": "#b6b6b6", "s": ["沈杜公路", "三鲁公路", "闵瑞路", "浦航路", "东城一路", "汇臻路"]}], "edges": [[0, 1, 1.38], [1, 2, 1.54], [2, 3, 1.75], [3, 4, 2.17], [4, 5, 1.65], [5, 6, 1.76], [6, 7, 1.5], [7, 8, 1.45], [8, 9, 1.09], [9, 10, 0.99], [10, 11, 1.76], [11, 12, 1.06], [12, 13, 0.97], [13, 14, 1.04], [14, 15, 0.92], [15, 16, 1.1], [16, 17, 1.56], [17, 18, 1.03], [18, 19, 1.5], [19, 20, 1.66], [20, 21, 1.46], [21, 22, 1.54], [22, 23, 1.08], [23, 24, 1.85], [24, 25, 1.74], [25, 26, 1.42], [26, 27, 1.33], [28, 29, 1.55], [29, 30, 2.1], [30, 31, 0.55], [31, 32, 4.54], [32, 33, 1.47], [33, 34, 1.35], [34, 35, 1.75], [35, 36, 1.43], [36, 37, 1.53], [37, 38, 1.64], [38, 39, 1.56], [39, 12, 1.56], [12, 40, 1.15], [40, 41, 1.76], [41, 42, 1.48], [42, 43, 1.29], [43, 44, 2.09], [44, 45, 1.29], [45, 46, 0.97], [46, 47, 3.02], [47, 48, 1.49], [48, 49, 2.09], [49, 50, 3.57], [50, 51, 1.76], [51, 52, 2.17], [52, 53, 2.09], [53, 54, 2.71], [54, 55, 3.24], [55, 56, 5.56], [56, 57, 2.24], [4, 58, 1.39], [58, 59, 1.36], [59, 60, 1.05], [60, 61, 1.63], [61, 62, 1.43], [62, 63, 1.47], [63, 36, 0.99], [36, 64, 1.69], [64, 65, 0.96], [65, 66, 1.47], [66, 67, 1.49], [67, 15, 1.8], [15, 68, 1.86], [68, 69, 1.06], [69, 70, 1.36], [70, 71, 1.21], [71, 72, 0.97], [72, 73, 1.91], [73, 74, 1.7], [74, 75, 1.57], [75, 76, 1.78], [76, 77, 1.53], [77, 78, 1.63], [78, 79, 1.31], [79, 80, 1.87], [80, 81, 1.09], [81, 82, 1.56], [82, 83, 2.15], [6, 61, 1.13], [61, 62, 1.43], [62, 63, 1.47], [63, 36, 0.99], [36, 64, 1.69], [64, 65, 0.96], [65, 66, 1.47], [66, 67, 1.49], [67, 15, 1.8], [15, 68, 1.86], [68, 84, 1.55], [84, 85, 1.22], [85, 86, 1.3], [86, 87, 0.82], [87, 88, 1.39], [88, 43, 1.59], [43, 89, 0.9], [89, 90, 1.33], [90, 91, 0.93], [91, 92, 1.92], [92, 93, 1.28], [93, 94, 1.49], [94, 95, 1.34], [95, 96, 0.93], [96, 97, 1.3], [0, 98, 1.52], [98, 99, 1.14], [99, 100, 2.88], [100, 101, 2.71], [101, 102, 2.29], [102, 103, 1.03], [103, 104, 1.28], [104, 105, 1.57], [105, 106, 1.53], [106, 107, 1.17], [108, 109, 2.1], [109, 110, 2.92], [110, 111, 2.9], [111, 112, 1.93], [112, 113, 2.06], [113, 114, 0.98], [114, 115, 1.8], [116, 117, 1.61], [117, 118, 1.12], [118, 119, 0.83], [119, 120, 1.19], [120, 121, 1.58], [121, 122, 1.55], [122, 123, 1.12], [123, 124, 1.37], [124, 90, 1.07], [90, 125, 1.01], [125, 43, 1.03], [43, 126, 0.91], [126, 127, 0.96], [127, 128, 0.97], [128, 129, 1.41], [129, 130, 0.96], [130, 131, 1.29], [131, 132, 0.9], [132, 133, 1.01], [133, 134, 1.02], [134, 135, 1.18], [135, 136, 1.4], [136, 137, 1.14], [137, 138, 1.68], [138, 139, 1.81], [139, 140, 1.63], [140, 141, 1.36], [142, 143, 1.72], [143, 144, 2.91], [144, 145, 1.02], [145, 146, 1.87], [146, 147, 2.62], [147, 148, 1.56], [148, 149, 0.97], [149, 150, 1.31], [150, 151, 1.41], [151, 152, 1.26], [152, 153, 1.18], [153, 154, 1.24], [154, 155, 1.2], [155, 156, 0.91], [156, 66, 1.4], [66, 157, 1.07], [157, 158, 0.95], [158, 38, 1.3], [38, 9, 1.17], [9, 159, 1.66], [159, 96, 1.12], [96, 160, 0.79], [160, 161, 2.23], [161, 162, 1.44], [162, 163, 0.84], [163, 164, 0.73], [164, 122, 1.04], [122, 165, 1.5], [165, 166, 1.56], [166, 167, 1.21], [167, 46, 1.45], [46, 168, 1.04], [169, 170, 1.44], [170, 171, 1.28], [171, 172, 1.47], [172, 173, 2.77], [173, 174, 2.76], [174, 116, 1.71], [116, 175, 1.61], [175, 176, 1.17], [176, 163, 0.93], [163, 177, 0.8], [177, 93, 2.01], [93, 178, 1.21], [178, 179, 0.88], [179, 180, 1.09], [180, 12, 0.75], [12, 181, 1.19], [181, 182, 1.31], [182, 183, 1.21], [183, 70, 1.4], [70, 184, 1.35], [184, 185, 1.06], [185, 186, 0.85], [186, 187, 0.9], [187, 188, 1.11], [188, 189, 1.32], [189, 190, 0.82], [190, 191, 1.14], [191, 192, 1.16], [192, 193, 0.93], [194, 195, 1.93], [195, 196, 1.76], [196, 197, 1.68], [197, 198, 2.8], [198, 199, 3.6], [199, 200, 2.31], [200, 201, 3.51], [201, 202, 6.38], [202, 203, 2.13], [203, 204, 1.61], [204, 205, 2.01], [205, 206, 1.88], [206, 207, 1.4], [207, 208, 2.1], [208, 61, 1.68], [61, 7, 1.41], [7, 159, 1.45], [159, 209, 1.13], [209, 210, 0.9], [210, 211, 0.94], [211, 178, 0.93], [178, 212, 1.37], [212, 213, 2.4], [213, 43, 1.12], [43, 214, 2.17], [214, 215, 1.11], [215, 216, 2.25], [216, 217, 2.4], [217, 218, 1.69], [218, 219, 1.8], [219, 220, 1.01], [220, 221, 1.83], [221, 222, 1.2], [222, 223, 1.55], [224, 225, 1.08], [225, 226, 1.02], [30, 31, 0.55], [31, 227, 2.33], [227, 228, 2.1], [228, 229, 1.3], [229, 230, 1.37], [230, 231, 1.18], [231, 232, 0.87], [232, 62, 0.89], [62, 233, 1.56], [233, 234, 1.14], [234, 10, 1.68], [10, 235, 1.66], [235, 179, 0.92], [179, 236, 1.12], [236, 40, 1.22], [40, 237, 0.71], [237, 238, 0.99], [238, 84, 0.97], [84, 239, 1.21], [239, 185, 1.05], [185, 240, 0.98], [240, 241, 0.92], [241, 242, 1.13], [242, 243, 0.75], [243, 244, 1.16], [244, 245, 1.02], [245, 246, 0.79], [246, 247, 1.44], [247, 248, 3.12], [248, 249, 1.02], [249, 250, 1.38], [250, 141, 1.21], [141, 251, 1.57], [252, 253, 1.32], [253, 254, 3.44], [254, 255, 1.18], [255, 256, 1.92], [256, 257, 2.2], [257, 258, 5.2], [259, 260, 1.95], [260, 261, 4.14], [261, 262, 2.02], [262, 263, 2.59], [263, 264, 3.39], [264, 265, 1.99], [265, 266, 3.22], [266, 267, 1.62], [267, 268, 1.29], [268, 269, 1.44], [269, 270, 1.35], [270, 271, 1.55], [271, 272, 1.13], [272, 65, 0.7], [65, 273, 1.19], [273, 37, 1.39], [37, 233, 2.19], [233, 7, 0.8], [7, 274, 1.99], [274, 275, 1.39], [275, 276, 0.92], [276, 277, 0.81], [277, 116, 2.21], [116, 278, 3.39], [278, 279, 1.19], [279, 280, 1.7], [280, 281, 1.53], [281, 282, 1.8], [282, 283, 2.32], [283, 284, 1.86], [284, 285, 2.1], [285, 286, 5.28], [287, 288, 1.93], [288, 289, 1.23], [289, 290, 1.76], [290, 291, 0.76], [291, 292, 1.41], [292, 293, 0.98], [293, 5, 1.37], [5, 59, 1.14], [59, 275, 0.94], [275, 160, 1.44], [160, 95, 1.3], [95, 209, 1.07], [209, 10, 1.47], [10, 39, 1.74], [39, 14, 1.42], [14, 181, 1.3], [181, 237, 1.1], [237, 294, 1.76], [294, 295, 0.96], [295, 86, 0.82], [86, 296, 1.32], [296, 297, 0.99], [297, 298, 1.47], [298, 299, 0.97], [299, 300, 0.88], [300, 301, 1.81], [301, 134, 0.96], [134, 302, 1.47], [302, 303, 1.26], [303, 304, 1.15], [304, 220, 2.34], [305, 306, 1.6], [306, 307, 2.02], [307, 308, 1.35], [308, 309, 1.61], [309, 310, 1.26], [310, 64, 1.89], [64, 273, 1.06], [273, 311, 0.83], [311, 157, 1.1], [157, 312, 0.77], [312, 14, 1.43], [14, 313, 0.74], [313, 39, 0.81], [39, 314, 1.24], [314, 235, 1.17], [235, 211, 0.83], [211, 315, 1.47], [315, 316, 1.76], [316, 162, 1.04], [162, 176, 0.96], [176, 121, 1.49], [121, 317, 1.64], [317, 318, 1.42], [318, 319, 1.2], [319, 320, 0.86], [320, 321, 1.09], [321, 322, 1.86], [322, 323, 1.99], [323, 324, 1.32], [324, 325, 1.64], [326, 327, 1.74], [327, 328, 1.71], [328, 329, 1.56], [329, 330, 1.72], [330, 331, 0.97], [331, 332, 1.26], [332, 333, 1.33], [333, 271, 1.03], [271, 334, 1.0], [334, 65, 0.75], [65, 311, 1.42], [311, 335, 1.01], [335, 38, 1.15], [38, 11, 2.66], [11, 180, 0.75], [180, 236, 0.83], [236, 41, 1.91], [41, 42, 1.48], [42, 88, 0.91], [88, 336, 1.19], [336, 337, 0.97], [337, 338, 1.4], [338, 130, 1.98], [130, 216, 1.36], [216, 339, 1.55], [339, 340, 1.01], [340, 341, 1.61], [341, 342, 1.37], [342, 343, 1.06], [344, 345, 2.05], [345, 346, 3.01], [346, 347, 2.61], [347, 348, 0.96], [348, 349, 1.08], [349, 350, 1.52], [350, 351, 1.34], [351, 352, 1.84], [352, 353, 0.87], [353, 354, 1.65], [354, 4, 1.22], [4, 293, 1.8], [293, 208, 0.93], [208, 355, 1.2], [355, 356, 1.14], [356, 357, 1.18], [357, 35, 1.56], [35, 358, 1.84], [358, 310, 0.79], [310, 359, 1.39], [359, 333, 0.88], [333, 270, 1.51], [270, 360, 1.76], [360, 361, 1.04], [361, 362, 1.12], [362, 363, 1.01], [363, 364, 1.06], [364, 365, 1.41], [365, 146, 3.01], [46, 322, 4.16], [322, 283, 2.84], [283, 366, 5.28], [366, 367, 3.83], [367, 368, 2.77], [368, 369, 3.37], [369, 370, 5.1], [370, 371, 6.32], [371, 372, 4.58], [372, 373, 9.78], [373, 374, 7.41], [374, 375, 2.7], [30, 29, 2.1], [29, 376, 2.09], [376, 377, 2.67], [377, 378, 1.28], [378, 379, 2.24], [379, 380, 3.21], [380, 381, 4.1], [381, 382, 2.64], [382, 383, 2.91], [383, 384, 3.41], [384, 385, 5.21], [385, 386, 2.98], [386, 387, 6.49], [388, 389, 2.14], [389, 390, 2.08], [390, 391, 2.33], [391, 392, 1.69], [392, 393, 1.4], [393, 394, 2.37], [394, 282, 2.84], [282, 321, 1.37], [321, 395, 1.69], [395, 396, 1.01], [396, 46, 1.47], [46, 397, 2.16], [397, 214, 0.8], [214, 127, 1.11], [127, 337, 1.01], [337, 398, 1.47], [398, 399, 0.76], [399, 296, 0.72], [296, 187, 1.34], [187, 400, 1.06], [400, 241, 0.88], [241, 401, 1.35], [401, 402, 1.37], [402, 403, 1.66], [403, 75, 1.29], [75, 404, 1.36], [404, 405, 1.05], [405, 406, 2.62], [406, 23, 1.28], [23, 407, 1.92], [169, 408, 1.65], [408, 409, 1.01], [409, 410, 0.82], [410, 411, 1.26], [411, 412, 0.97], [226, 229, 2.28], [258, 262, 2.85], [103, 108, 1.55], [97, 6, 0.7]]}</script>
+<script id="calculator">
+var MetroCore = (function(){
+  'use strict';
+  var NEW_BOUNDS = [4,8,12,16,23,30,40,50];
+  var NEW_PRICES = [3,4,5,6,7,8,9,10];
+  var PASSES = [{n:35,price:190},{n:45,price:210},{n:60,price:270},{n:90,price:390}];
+
+  /* 票价分档前先消除浮点噪声：把里程归整到 0.001 km（1 米），
+     避免 26.000000000000004 这类值在 ceil 分档时多进一档 */
+  function snapKm(km){
+    if(typeof km!=='number' || !isFinite(km)) return km;
+    return Math.round(km*1000)/1000;
+  }
+  function fareOld(km){
+    km = snapKm(km);
+    if(km<=0) return 0;
+    if(km<=6) return 3;
+    return 3 + Math.ceil((km-6)/10);
+  }
+  function fareNew(km){
+    km = snapKm(km);
+    if(km<=0) return 0;
+    for(var i=0;i<NEW_BOUNDS.length;i++) if(km<=NEW_BOUNDS[i]) return NEW_PRICES[i];
+    return 10 + Math.ceil((km-50)/15);
+  }
+  /* 金额比较统一容差：避免 3.6×25 = 89.99999999999999 被判定为"未满 90"这类浮点误差 */
+  var EPS = 1e-9;
+  function simulate(rides, threshold){
+    threshold = threshold === undefined ? 90 : threshold;
+    var cum = 0, total = 0;
+    for(var r=0;r<rides.length;r++){
+      for(var i=0;i<rides[r].count;i++){
+        /* cum + EPS >= threshold：让"数学上正好等于门槛"的情况也能享受折扣 */
+        var pay = (cum + 1e-6) >= threshold ? rides[r].fare * 0.9 : rides[r].fare;
+        total += pay;
+        cum += pay;
+      }
+    }
+    return total;
+  }
+  function costPass(rides, pass, busTrips, busFare, busDiscount){
+    var totalTrips = rides.reduce(function(sum,r){ return sum+r.count; },0);
+    var sorted = rides.slice().sort(function(a,b){ return b.fare-a.fare; });
+    var remain = pass.n;
+    var cash = [];
+    for(var i=0;i<sorted.length;i++){
+      var use = Math.min(remain,sorted[i].count);
+      remain -= use;
+      if(sorted[i].count-use>0) cash.push({fare:sorted[i].fare,count:sorted[i].count-use});
+    }
+    var overflow = cash.length ? simulate(cash,90) : 0;
+    var metro = pass.price + overflow;
+    /* 公交：busDiscount 是"优惠总额"（买计次票时传 0）。
+       下限保护，避免优惠额超过票价总额时出现负成本。 */
+    var bus = Math.max(0, busTrips * busFare - (busDiscount||0));
+    var waste = Math.max(0,pass.n-totalTrips);
+    return {
+      metro:metro,
+      bus:bus,
+      total:metro+bus,
+      waste:waste,
+      overflow:Math.max(0,totalTrips-pass.n),
+      unit:(metro+bus)/Math.max(1,totalTrips)
+    };
+  }
+  /* 按"天"建模的通勤成本：每天早、晚各一次地铁。
+     联乘优惠规则（Neal 确认）：
+       - 每天 1 次公交 → 这 1 元优惠给【地铁】
+       - 每天 2 次公交 → 1 元给【地铁】，1 元给【公交】
+     地铁享受联乘优惠时：先减 1 元，再判断满额 9 折（即 (票价-1)×0.9）。
+     固定线路是独立行程，无联乘优惠，接在主通勤之后继续累计。 */
+  function simulateCommute(days, fare, threshold, metroTransferPerDay, fixedRides, extraSingleTrips){
+    var cum = 0, total = 0;
+    /* 统一用 cum + 1e-6 >= threshold 判断，消除浮点累加误差（与 simulate 一致） */
+    for(var d=0; d<days; d++){
+      /* 早高峰地铁：当天有公交接驳（≥1次）即享受联乘优惠 */
+      var f1 = metroTransferPerDay > 0 ? Math.max(0, fare-1) : fare;
+      var p1 = (cum + 1e-6) >= threshold ? f1*0.9 : f1;
+      total += p1; cum += p1;
+      /* 晚高峰地铁：无联乘优惠 */
+      var p2 = (cum + 1e-6) >= threshold ? fare*0.9 : fare;
+      total += p2; cum += p2;
+    }
+    /* 额外单次行程（如某天只坐单程）：按早班口径，享受联乘优惠 */
+    var extra = extraSingleTrips||0;
+    for(var e=0; e<extra; e++){
+      var fe = metroTransferPerDay > 0 ? Math.max(0, fare-1) : fare;
+      var pe = (cum + 1e-6) >= threshold ? fe*0.9 : fe;
+      total += pe; cum += pe;
+    }
+    (fixedRides||[]).forEach(function(r){
+      for(var i=0;i<r.count;i++){
+        var pay = (cum + 1e-6) >= threshold ? r.fare*0.9 : r.fare;
+        total += pay; cum += pay;
+      }
+    });
+    return { total: total, cum: cum };
+  }
+
+  /* 公交成本统一计算：逐笔处理，每笔最多减到 0（优惠不能把单笔票价扣成负数）。
+     每天 busPerDay 次公交，其中 discountPerDay 次享受 1 元联乘优惠。
+     这样 busFare<1 元时也不会出现"优惠超额"或负成本。 */
+  function busCost(days, busPerDay, busFare, discountPerDay){
+    var trips = busPerDay*days;
+    var disc = Math.min(trips, (discountPerDay||0)*days);
+    /* 每笔票价最低 0 元；优惠只作用于有票价的那部分 */
+    var full = trips-disc;
+    return Math.max(0, full*busFare) + Math.max(0, disc*Math.max(0, busFare-1));
+  }
+
+  function calculate(input){
+    var days = input.workDays;
+    var busPerDay = input.busPerDay || 0;
+    /* 地铁享受联乘优惠的次数/天：只要有公交接驳（≥1次）地铁就享受1元优惠
+       —— 每天1次公交时优惠给地铁；每天2次时地铁、公交各1次 */
+    var metroTransferPerDay = busPerDay >= 1 ? 1 : 0;
+    /* 公交享受联乘优惠的次数/天：每天2次公交才有1次（每天1次时优惠给了地铁） */
+    var busTransferPerDay = busPerDay >= 2 ? 1 : 0;
+
+    var rides = [{fare:input.newFare,count:days*2}];
+    var fixedNew = [];
+    (input.fixedRoutes||[]).forEach(function(route){
+      /* 兼容 count / times 两种字段名，避免调用方只传一种时漏算 */
+      var cnt = route.count!=null ? route.count : route.times;
+      if(cnt>0){
+        rides.push({fare:route.newFare,count:cnt});
+        fixedNew.push({fare:route.newFare,count:cnt});
+      }
+    });
+    var totalTrips = rides.reduce(function(sum,r){ return sum+r.count; },0);
+    var busTrips = busPerDay * days;
+
+    /* 地铁刷码：按天建模（含联乘优惠 + 满额9折） */
+    var commute = simulateCommute(days, input.newFare, 90, metroTransferPerDay, fixedNew);
+    var metroPayg = commute.total;
+
+    /* 公交成本：每天 busPerDay 次，其中 busTransferPerDay 次减 1 元。
+       下限保护：公交票价低于 1 元时优惠不应把总支出算成负数 */
+    var busPayg = busCost(days, busPerDay, input.busFare, busTransferPerDay);
+
+    var payg = {
+      key:'payg',name:'直接刷码',metro:metroPayg,bus:busPayg,
+      total:metroPayg+busPayg,waste:0,overflow:0,
+      unit:(metroPayg+busPayg)/Math.max(1,totalTrips)
+    };
+    var passes = PASSES.map(function(pass){
+      /* 买计次票后公交联乘优惠归零（官方：不与公交换乘优惠同享），故传 0 次优惠 */
+      var result = costPass(rides,pass,busTrips,input.busFare,0);
+      result.key = 'pass'+pass.n;
+      result.name = pass.n+' 次票';
+      result.n = pass.n;
+      result.price = pass.price;
+      return result;
+    });
+    var all = [payg].concat(passes);
+    var best = all.reduce(function(current,item){
+      return item.total < current.total-1e-9 ? item : current;
+    },payg);
+    var bestPass = passes.reduce(function(current,item){
+      return item.total < current.total-1e-9 ? item : current;
+    },passes[0]);
+
+    /* 旧方案成本：同样按天建模（旧门槛 70），保证与 payg 完全同口径 */
+    var oldFixed = [];
+    (input.fixedRoutes||[]).forEach(function(r){
+      /* 兼容 count / times 两种字段名 */
+      var cnt = r.times!=null ? r.times : r.count;
+      if(r && cnt>0 && r.oldFare>0) oldFixed.push({fare:r.oldFare,count:cnt});
+    });
+    var oldCommute = simulateCommute(days, input.oldFare, 70, metroTransferPerDay, oldFixed);
+    var oldCost = oldCommute.total;
+    var oldBus = busCost(days, busPerDay, input.busFare, busTransferPerDay);
+    var oldCostAll = oldCost + oldBus;
+
+    /* 纯涨价影响（不买卡）：只比地铁，公交在两侧完全抵消 */
+    var diffPayg = payg.metro - oldCost;
+    /* 买卡后相对旧方案：两侧都含公交 */
+    var diffBest = best.total - oldCostAll;
+    return {
+      rides:rides,totalTrips:totalTrips,busTrips:busTrips,
+      payg:payg,passes:passes,all:all,best:best,bestPass:bestPass,
+      oldCost:oldCost,oldBus:oldBus,oldCostAll:oldCostAll,
+      diffPayg:diffPayg,diffBest:diffBest,
+      diff:diffBest,
+      saving:payg.total-best.total
+    };
+  }
+  function createNetwork(metro){
+    var index = Object.create(null), adjacency = [];
+    metro.names.forEach(function(name,i){ index[name]=i; adjacency[i]=[]; });
+    metro.edges.forEach(function(edge){
+      adjacency[edge[0]].push([edge[1],edge[2]]);
+      adjacency[edge[1]].push([edge[0],edge[2]]);
+    });
+    return {index:index,adjacency:adjacency,cache:Object.create(null)};
+  }
+  function distance(network,from,to){
+    var a = network.index[from], b = network.index[to];
+    if(a===undefined || b===undefined) return null;
+    if(a===b) return 0;
+    var key = Math.min(a,b)+'-'+Math.max(a,b);
+    if(network.cache[key]!==undefined) return network.cache[key];
+    var n = network.adjacency.length;
+    var dist = new Float64Array(n), done = new Uint8Array(n);
+    for(var i=0;i<n;i++) dist[i]=Infinity;
+    dist[a]=0;
+    for(var step=0;step<n;step++){
+      var u=-1, nearest=Infinity;
+      for(var j=0;j<n;j++){
+        if(!done[j] && dist[j]<nearest){ nearest=dist[j]; u=j; }
+      }
+      if(u<0) break;
+      if(u===b) break;
+      done[u]=1;
+      var edges=network.adjacency[u];
+      for(var k=0;k<edges.length;k++){
+        var v=edges[k][0], candidate=dist[u]+edges[k][1];
+        if(candidate<dist[v]) dist[v]=candidate;
+      }
+    }
+    var result = isFinite(dist[b]) ? dist[b] : null;
+    /* 里程由多段边累加而来，会产生 26.000000000000004 这类浮点噪声，
+       恰好落在票价分档边界上时会多收 1 元。归整到 0.001 km（1 米）精度。 */
+    if(result!==null) result = Math.round(result*1000)/1000;
+    network.cache[key]=result;
+    return result;
+  }
+  return {NEW_BOUNDS:NEW_BOUNDS,NEW_PRICES:NEW_PRICES,PASSES:PASSES,
+    fareOld:fareOld,fareNew:fareNew,simulate:simulate,costPass:costPass,
+    simulateCommute:simulateCommute,busCost:busCost,
+    calculate:calculate,createNetwork:createNetwork,distance:distance};
+})();
+</script>
+<script id="shareExtra">
+/* 内联 QR 编码器：Version 6 / 纠错 M / 字节模式 / mask 0，无外部依赖，上限 106 字符 */
+var QRCore = (function(){
+  'use strict';
+  /* QR Version 6, EC level M: 41x41, 4 blocks x 27 data codewords, 16 EC each */
+  var SIZE = 41;
+  var DATA_CW = 108;           /* 4 blocks x 27 */
+  var BLOCK_CNT = 4;
+  var BLOCK_LEN = 27;
+  var EC_LEN = 16;
+  var MAX_CHARS = Math.floor((DATA_CW * 8 - 12) / 8);   /* 字节模式：4位模式+8位计数 */
+
+  var EXP = new Array(512), LOG = new Array(256);
+  (function(){
+    var x = 1;
+    for(var i=0;i<255;i++){ EXP[i]=x; LOG[x]=i; x<<=1; if(x&0x100) x^=0x11D; }
+    for(var j=255;j<512;j++) EXP[j]=EXP[j-255];
+  })();
+  function gmul(a,b){ return (a===0||b===0)?0:EXP[LOG[a]+LOG[b]]; }
+  function rsGen(deg){
+    var p=[1];
+    for(var i=0;i<deg;i++){
+      var q=[p[0]];
+      for(var j=1;j<p.length;j++) q.push(p[j]^gmul(p[j-1],EXP[i]));
+      q.push(gmul(p[p.length-1],EXP[i]));
+      p=q;
+    }
+    return p;
+  }
+  function rsEncode(data,deg){
+    var gen=rsGen(deg);
+    var buf=data.slice();
+    for(var i=0;i<deg;i++) buf.push(0);
+    for(var d=0;d<data.length;d++){
+      var c=buf[d];
+      if(c!==0) for(var g=1;g<gen.length;g++) buf[d+g]^=gmul(gen[g],c);
+    }
+    return buf.slice(data.length);
+  }
+  function formatBits(mask){
+    var data=mask, d=data<<10;
+    for(var i=4;i>=0;i--) if(d&(1<<(i+10))) d^=0x537<<i;
+    return ((data<<10)|d)^0x5412;
+  }
+  function makeMatrix(text){
+    if(text.length > MAX_CHARS){
+      throw new Error('QR 内容超长：' + text.length + ' > ' + MAX_CHARS + ' 字符');
+    }
+    var bytes=[];
+    for(var i=0;i<text.length;i++){
+      var ch=text.charCodeAt(i);
+      if(ch>255) throw new Error('QR 仅支持拉丁字符');
+      bytes.push(ch);
+    }
+    var bits=[];
+    function put(val,len){ for(var k=len-1;k>=0;k--) bits.push((val>>k)&1); }
+    put(0x4,4);
+    put(bytes.length,8);
+    for(var b=0;b<bytes.length;b++) put(bytes[b],8);
+    var cap=DATA_CW*8;
+    var term=Math.min(4,cap-bits.length);
+    put(0,term);
+    while(bits.length%8) bits.push(0);
+    var data=[];
+    for(var d=0;d<bits.length;d+=8){
+      var val=0;
+      for(var t=0;t<8;t++) val=(val<<1)|bits[d+t];
+      data.push(val);
+    }
+    var pads=[0xEC,0x11],pi=0;
+    while(data.length<DATA_CW){ data.push(pads[pi%2]); pi++; }
+
+    /* 分块交错：V6-M = 4 块，每块 27 数据码字，16 EC */
+    var blocks=[], ecs=[];
+    for(var bi=0;bi<BLOCK_CNT;bi++){
+      var seg=data.slice(bi*BLOCK_LEN,(bi+1)*BLOCK_LEN);
+      blocks.push(seg);
+      ecs.push(rsEncode(seg,EC_LEN));
+    }
+    var stream=[];
+    function pushByte(v){ for(var k=7;k>=0;k--) stream.push((v>>k)&1); }
+    for(var m=0;m<BLOCK_LEN;m++) for(var bi2=0;bi2<BLOCK_CNT;bi2++) pushByte(blocks[bi2][m]);
+    for(var e=0;e<EC_LEN;e++) for(var bi3=0;bi3<BLOCK_CNT;bi3++) pushByte(ecs[bi3][e]);
+
+    var mod=[], res=[];
+    for(var r=0;r<SIZE;r++){
+      var mr=[],rr=[];
+      for(var c0=0;c0<SIZE;c0++){ mr.push(0); rr.push(false); }
+      mod.push(mr); res.push(rr);
+    }
+    function finder(r0,c0){
+      for(var dr=-1;dr<=7;dr++) for(var dc=-1;dc<=7;dc++){
+        var rr2=r0+dr, cc2=c0+dc;
+        if(rr2<0||rr2>=SIZE||cc2<0||cc2>=SIZE) continue;
+        var on=(dr>=0&&dr<=6&&dc>=0&&dc<=6)&&
+               (dr===0||dr===6||dc===0||dc===6||(dr>=2&&dr<=4&&dc>=2&&dc<=4));
+        mod[rr2][cc2]=on?1:0; res[rr2][cc2]=true;
+      }
+    }
+    finder(0,0); finder(0,SIZE-7); finder(SIZE-7,0);
+
+    /* V6 校正图形：中心 (34,34) */
+    var ALIGN=34;
+    for(var ar=-2;ar<=2;ar++) for(var ac=-2;ac<=2;ac++){
+      mod[ALIGN+ar][ALIGN+ac]=(Math.max(Math.abs(ar),Math.abs(ac))!==1)?1:0;
+      res[ALIGN+ar][ALIGN+ac]=true;
+    }
+
+    /* 定位图形 */
+    for(t=8;t<SIZE-8;t++){
+      mod[6][t]=t%2===0?1:0; res[6][t]=true;
+      mod[t][6]=t%2===0?1:0; res[t][6]=true;
+    }
+    /* 暗模块 */
+    mod[SIZE-8][8]=1; res[SIZE-8][8]=true;
+
+    /* 格式信息 */
+    var fmt=formatBits(0);
+    function fb(i){ return (fmt>>i)&1; }
+    for(var f1=0;f1<=5;f1++){ mod[8][f1]=fb(14-f1); res[8][f1]=true; }
+    mod[8][7]=fb(8); res[8][7]=true;
+    mod[8][8]=fb(7); res[8][8]=true;
+    mod[7][8]=fb(6); res[7][8]=true;
+    for(var f2=0;f2<=5;f2++){ mod[f2][8]=fb(f2); res[f2][8]=true; }
+    for(var f3=0;f3<=6;f3++){ mod[SIZE-1-f3][8]=fb(14-f3); res[SIZE-1-f3][8]=true; }
+    for(var f4=0;f4<=7;f4++){ mod[8][SIZE-8+f4]=fb(7-f4); res[8][SIZE-8+f4]=true; }
+
+    /* 数据填充 */
+    var idx=0, up=true;
+    for(var col=SIZE-1;col>0;col-=2){
+      if(col===6) col--;
+      for(var step=0;step<SIZE;step++){
+        var row=up?SIZE-1-step:step;
+        for(var cc=0;cc<2;cc++){
+          var cCol=col-cc;
+          if(res[row][cCol]) continue;
+          var bit=idx<stream.length?stream[idx]:0;
+          if((row+cCol)%2===0) bit^=1;
+          mod[row][cCol]=bit;
+          idx++;
+        }
+      }
+      up=!up;
+    }
+    return mod;
+  }
+  return { matrix:makeMatrix, formatBits:formatBits, size:SIZE, maxChars:MAX_CHARS };
+})();
+/* 买卡风险提示：判据A 省钱太少 / 判据B 浪费率高 / 判据C 抗波动差 */
+var RiskCore = (function(){
+  'use strict';
+  function money(v){ return (Math.round(v*10)/10).toFixed(1); }
+  function evaluate(input,result){
+    if(result.best.key==='payg') return [];
+    var best=result.best;
+    var saving=result.payg.total-best.total;
+    var warnings=[];
+    if(saving<15-1e-6){ /* 判据A */
+      warnings.push('省 '+money(saving)+' 元 —— 差别不大，刷码更灵活');
+    }
+    var wasteRate=best.waste/best.n*100;
+    if(wasteRate>8+1e-6){ /* 判据B：有浪费时无溢出，metro 即票价 */
+      var actual=best.metro/Math.max(1,best.n-best.waste);
+      var nominal=best.price/best.n;
+      warnings.push('有 '+best.waste+' 次可能用不完，实际单价 '+actual.toFixed(2)+' 元（名义 '+nominal.toFixed(2)+' 元）');
+    }
+    /* 判据C：抗波动性。核心原则 —— 必须用【同一批行程】比较双方。
+       做法：把总行程数减少 cut 次（cut=1..3），在该行程数下分别重算
+         A. 全部刷码成本（含公交联乘优惠）
+         B. 该档计次票成本（票次数不变，溢出行程数随行程减少；公交无联乘优惠）
+       若某个 cut 下 B > A，说明"少坐 cut 次就会亏"，取最小的 cut。
+       若 1..3 次都仍省钱，则不输出任何警告（不编造临界点）。 */
+    var busPerDayC=input.busPerDay||0;
+    var fixedOnly=(result.rides||[]).slice(1).map(function(r){return {fare:r.fare,count:r.count};});
+    var mTransC=busPerDayC>=1?1:0;
+    var fullDays=input.workDays;
+    var critN=0, critLoss=0;
+    for(var cut=1; cut<=3; cut++){
+      /* 少坐 cut 次：直接从主通勤总次数里扣，再拆回"整天 + 单程"。
+         这样 cut 超过主通勤次数时会自然 clamp 到 0，不会出现负数或凭空多出行程。 */
+      var fullMainTrips=fullDays*2;
+      var newMainTrips=Math.max(0, fullMainTrips-cut);
+      var newDays=Math.floor(newMainTrips/2);
+      var cutSingles=newMainTrips%2;
+      /* 主线路可能减到 0，但固定线路仍在。只有【总行程数为 0】时才无行程可评估 */
+      var fixedTripsTotal=0;
+      for(var fi=0; fi<fixedOnly.length; fi++) fixedTripsTotal+=fixedOnly[fi].count;
+      if(newMainTrips+fixedTripsTotal<=0) break;
+      var newRides=[{fare:input.newFare,count:newMainTrips}].concat(fixedOnly);
+      var newBusTrips=busPerDayC*newDays;
+      /* A. 少坐后全部刷码：地铁（含联乘）+ 公交（含联乘优惠） */
+      var paygCut=MetroCore.simulateCommute(newDays, input.newFare, 90, mTransC, fixedOnly, cutSingles).total
+                 + MetroCore.busCost(newDays, busPerDayC, input.busFare, (busPerDayC>=2?1:0));
+      /* B. 少坐后买卡：票次数不变，溢出按 costPass 原逻辑重算；公交无联乘优惠 */
+      var passRes=MetroCore.costPass(newRides,{n:best.n,price:best.price},newBusTrips,input.busFare,0);
+      var passCut=passRes.total;
+      if(passCut>paygCut+1e-9){
+        critN=cut; critLoss=passCut-paygCut; break;
+      }
+    }
+    /* 亏损额不足 0.05 元时 money() 会显示成 0.0，读起来像"多花 0 元"，故用"不足 0.1 元"表述 */
+    if(critN>0){
+      warnings.push(critLoss>=0.05
+        ? '每月少坐 '+critN+' 次，买卡反而会多花 '+money(critLoss)+' 元'
+        : '每月少坐 '+critN+' 次，买卡反而会略贵（不足 0.1 元）');
+    }
+    return warnings;
+  }
+  return { evaluate:evaluate };
+})();
+</script>
+<script>
+(function(){
+  'use strict';
+  var $ = function(id){ return document.getElementById(id); };
+  var metro = JSON.parse($('metroData').textContent);
+  var network = MetroCore.createNetwork(metro);
+  var mainRouteValid = false;
+  var fixedSequence = 0;
+  var SHARE_URL = 'https://metro-fare-calc-58170.app.workbuddy.host/?sharecode=ZSORF34EAT';
+  function drawQR(){
+    var canvas=$('qrCanvas');
+    if(!canvas || !canvas.getContext) return;
+    var m=QRCore.matrix(SHARE_URL);
+    var n=m.length, quiet=4;
+    var scale=Math.floor(canvas.width/(n+quiet*2));
+    var off=Math.round((canvas.width-n*scale)/2);
+    var ctx=canvas.getContext('2d');
+    ctx.fillStyle='#ffffff';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='#000000';
+    for(var r=0;r<n;r++) for(var c=0;c<n;c++){
+      if(m[r][c]) ctx.fillRect(off+c*scale,off+r*scale,scale,scale);
+    }
+  }
+
+  function money(value){
+    return (Math.round(value*10)/10).toFixed(1);
+  }
+  function signedMoney(value){
+    var rounded = Math.round(value*10)/10;
+    return (rounded>0?'+':'')+rounded.toFixed(1);
+  }
+  function numericValue(element,min,max,fallback){
+    if(element.value.trim()==='') return fallback;
+    var value = Number(element.value);
+    if(!isFinite(value)) return fallback;
+    return Math.min(max,Math.max(min,value));
+  }
+  function integerValue(element,min,max,fallback){
+    return Math.round(numericValue(element,min,max,fallback));
+  }
+  function normalize(element,min,max,fallback,integer){
+    var value = integer ? integerValue(element,min,max,fallback) : numericValue(element,min,max,fallback);
+    element.value = value;
+  }
+  function setMainRoute(){
+    var from=$('from').value.trim(), to=$('to').value.trim();
+    var km=MetroCore.distance(network,from,to);
+    if(km!==null && km>0){
+      mainRouteValid=true;
+      $('distance').textContent=km.toFixed(2)+' km';
+      $('oldFare').value=MetroCore.fareOld(km);
+      $('newFare').value=MetroCore.fareNew(km);
+      $('routeStatus').className='route-status';
+      $('routeStatus').textContent=from+' → '+to+' · 已按线网最短路径计算';
+      $('fareMode').innerHTML='票价按线网里程自动反算（'+km.toFixed(2)+' km），可能与实际扣费差 ±1 元，以实际扣费为准。<a class="fare-note-link" href="https://service.shmetro.com/yygg/5747.htm" target="_blank" rel="noopener">用官方查询核对 →</a>';
+    }else{
+      mainRouteValid=false;
+      $('distance').textContent='—';
+      $('oldFare').value='';
+      $('newFare').value='';
+      $('routeStatus').className='route-status error';
+      $('routeStatus').textContent=(from===to && from)?'起点和终点不能相同。':'请点击输入框选择两个有效站点。';
+      $('fareMode').textContent='选定有效路线后自动反算票价。';
+    }
+    render();
+  }
+  function manualFare(){
+    $('fareMode').innerHTML='当前为手动票价。<button type="button" class="fare-note-link" id="restoreAuto">恢复自动反算</button>';
+    render();
+  }
+  function fixedRows(){
+    return Array.prototype.slice.call(document.querySelectorAll('.fixed-item'));
+  }
+  function updateFixedLabels(){
+    var rows=fixedRows();
+    rows.forEach(function(row,i){
+      row.querySelector('.fixed-title').textContent='固定线路 '+(i+1);
+      row.querySelector('.remove-btn').setAttribute('aria-label','删除固定线路 '+(i+1));
+    });
+    $('fixedCount').textContent=rows.length?'（'+rows.length+'/3）':'';
+    $('fixedEmpty').hidden=rows.length>0;
+    $('addFixed').disabled=rows.length>=3;
+  }
+  function updateFixedRoute(row){
+    var from=row.querySelector('.fixed-from').value.trim();
+    var to=row.querySelector('.fixed-to').value.trim();
+    var km=MetroCore.distance(network,from,to);
+    var status=row.querySelector('.route-status');
+    if(km!==null && km>0){
+      row.dataset.valid='true';
+      row.dataset.oldFare=MetroCore.fareOld(km);
+      row.querySelector('.fixed-fare').value=MetroCore.fareNew(km);
+      status.className='route-status';
+      status.textContent='最短 '+km.toFixed(2)+' km · 旧票价 '+MetroCore.fareOld(km)+' 元 → 新票价 '+MetroCore.fareNew(km)+' 元，可手动修改';
+    }else{
+      row.dataset.valid='false';
+      row.dataset.oldFare='';
+      row.querySelector('.fixed-fare').value='';
+      status.className='route-status error';
+      status.textContent=(from===to && from)?'起点和终点不能相同。':'请选择两个不同的有效站点。';
+    }
+    render();
+  }
+  function addFixedRow(){
+    if(fixedRows().length>=3) return;
+    fixedSequence++;
+    var row=document.createElement('div');
+    row.className='fixed-item';
+    row.dataset.id=fixedSequence;
+    row.dataset.valid='false';
+    row.innerHTML=
+      '<div class="fixed-item-head"><strong class="fixed-title"></strong>'+
+      '<button class="remove-btn" type="button">删除</button></div>'+
+      '<div class="route-grid">'+
+        '<div class="field"><label>起点站</label><input class="fixed-from" type="text" placeholder="点击选择站点" autocomplete="off" readonly aria-haspopup="dialog"></div>'+
+        '<div></div>'+
+        '<div class="field"><label>终点站</label><input class="fixed-to" type="text" placeholder="点击选择站点" autocomplete="off" readonly aria-haspopup="dialog"></div>'+
+      '</div>'+
+      '<p class="route-status">请选择起终点。</p>'+
+      '<div class="fixed-settings">'+
+        '<div class="field"><label>新单程票价</label><div class="input-unit"><input class="fixed-fare" type="number" min="1" max="99" step="1" inputmode="numeric"><span>元</span></div></div>'+
+        '<div class="field"><label>每月次数</label><div class="input-unit"><input class="fixed-times" type="number" value="4" min="0" max="200" step="1" inputmode="numeric"><span>次</span></div></div>'+
+      '</div>';
+    row.querySelectorAll('label').forEach(function(label){
+      var input=label.parentElement.querySelector('input');
+      if(input){
+        if(!input.id) input.id='fixed-'+fixedSequence+'-'+Math.random().toString(36).slice(2,7);
+        label.htmlFor=input.id;
+      }
+    });
+    bindStationInput(row.querySelector('.fixed-from'),'选择起点站',function(){ updateFixedRoute(row); });
+    bindStationInput(row.querySelector('.fixed-to'),'选择终点站',function(){ updateFixedRoute(row); });
+    row.querySelector('.fixed-fare').addEventListener('input',render);
+    row.querySelector('.fixed-times').addEventListener('input',render);
+    row.querySelector('.fixed-times').addEventListener('change',function(){ normalize(this,0,200,0,true); render(); });
+    row.querySelector('.remove-btn').addEventListener('click',function(){
+      row.remove();
+      updateFixedLabels();
+      render();
+    });
+    $('fixedList').appendChild(row);
+    updateFixedLabels();
+    openPicker(row.querySelector('.fixed-from'),'选择起点站',function(){ updateFixedRoute(row); });
+    render();
+  }
+  function readInput(){
+    var routes=[];
+    fixedRows().forEach(function(row){
+      if(row.dataset.valid!=='true') return;
+      var fare=numericValue(row.querySelector('.fixed-fare'),1,99,0);
+      var count=integerValue(row.querySelector('.fixed-times'),0,200,0);
+      var oldFare=Number(row.dataset.oldFare)||fare;
+      if(fare>0 && count>0) routes.push({newFare:fare,oldFare:oldFare,count:count,times:count});
+    });
+    return {
+      oldFare:numericValue($('oldFare'),0,99,0),
+      newFare:numericValue($('newFare'),1,99,0),
+      workDays:integerValue($('workDays'),1,31,23),
+      busPerDay:integerValue($('busPerDay'),0,2,0),
+      busFare:numericValue($('busFare'),0,50,2),
+      fixedRoutes:routes
+    };
+  }
+  function renderPlans(result){
+    var body=$('planRows');
+    body.innerHTML='';
+    result.all.forEach(function(plan){
+      var tr=document.createElement('tr');
+      if(plan.key===result.best.key) tr.className='best';
+      var name=document.createElement('td');
+      name.innerHTML='<span class="plan-name">'+plan.name+'</span>'+(plan.key===result.best.key?'<span class="best-tag">最省</span>':'')+
+        '<span class="cell-note">地铁 '+money(plan.metro)+' · 公交 '+money(plan.bus)+'</span>';
+      var cost=document.createElement('td');
+      cost.textContent=money(plan.total);
+      var delta=document.createElement('td');
+      if(plan.key==='payg'){
+        delta.textContent='基准';
+      }else{
+        var difference=plan.total-result.payg.total;
+        /* 平价（差额 <0.05）显示"持平"，不要写成"贵 0.0" */
+        if(Math.abs(difference)<0.05){
+          delta.className='';
+          delta.textContent='持平';
+        }else{
+          delta.className=difference<0?'saving-text':'cost-text';
+          delta.textContent=(difference<0?'省 ':'贵 ')+money(Math.abs(difference));
+        }
+      }
+      var usage=document.createElement('td');
+      usage.textContent=plan.key==='payg'?'—':'溢出 '+plan.overflow+' · 剩余 '+plan.waste;
+      tr.appendChild(name); tr.appendChild(cost); tr.appendChild(delta); tr.appendChild(usage);
+      body.appendChild(tr);
+    });
+  }
+  function renderNotices(input,result){
+    var notices=[];
+    if(input.busPerDay>0){
+      /* 买计次票后联乘优惠全部归零（官方：不与公交换乘优惠同享）。
+         真实损失 = (刷码总成本) − (若买卡后仍按刷码享受优惠的总成本)，
+         即地铁侧的联乘优惠 + 公交侧的联乘优惠。
+         每天1次公交：地铁减1（公交全价）→ 损失在地铁侧
+         每天2次公交：地铁减1 + 公交减1 → 两侧都有损失 */
+      var busPerDay=Math.max(0,Math.min(2,input.busPerDay||0));
+      /* 无优惠时的地铁成本（联乘优惠归零后） */
+      var metroNoTransfer=MetroCore.simulateCommute(
+        input.workDays, input.newFare, 90, 0,
+        (result.rides||[]).slice(1).map(function(r){return {fare:r.fare,count:r.count};})
+      ).total;
+      var metroLoss=metroNoTransfer-result.payg.metro;          // 地铁侧损失
+      var busLoss=Math.max(0,(result.bestPass.bus||0)-result.payg.bus);  // 公交侧损失
+      var loss=metroLoss+busLoss;
+      if(result.bestPass.total>result.payg.total){
+        notices.push({type:'bus',html:'你有接驳，买计次票会损失每月 <strong>'+money(loss)+' 元</strong>联乘优惠。算下来<strong>刷码更省 '+money(result.bestPass.total-result.payg.total)+' 元</strong>。'});
+      }else{
+        notices.push({type:'bus',html:'你有接驳，已计入联乘优惠损失 <strong>'+money(loss)+' 元</strong>。计次票方案下不享受公交联乘优惠。'});
+      }
+    }
+    /* 激活提示只在推荐计次票时出现；天数用实际值，且不超过 30 个自然日的物理上限 */
+    if(result.best.key!=='payg'){
+      var coverDays=Math.min(input.workDays,30);
+      var coverNote=coverDays<input.workDays
+        ? '30 天窗口最多覆盖 <strong>'+coverDays+' 个工作日</strong>，你填了 '+input.workDays+' 天，超出的部分需要跨月续买。'
+        : '30 天窗口能覆盖 <strong>'+coverDays+' 个工作日</strong>。';
+      notices.push({type:'',html:'建议 <strong>12 月 1 日</strong> 激活，'+coverNote+'计次票自激活起 30 个自然日有效。'});
+    }
+    var scattered=document.querySelector('input[name="scattered"]:checked').value==='yes';
+    if(scattered){
+      notices.push({type:'',html:'零散出行建议：你的计次票能覆盖每月通勤吗？<strong>能用完</strong> → 单程票价高于 <strong>4.67 元</strong>（45 次票单价）就用票，更划算；<strong>用不完</strong> → 随便用，票钱已付，优先用在贵的行程上。'});
+    }
+    var list=$('noticeList');
+    list.innerHTML='';
+    notices.slice(0,3).forEach(function(notice,i){
+      var item=document.createElement('div');
+      item.className='notice'+(notice.type?' '+notice.type:'');
+      item.innerHTML='<span class="notice-index">'+String(i+1).padStart(2,'0')+'</span><p>'+notice.html+'</p>';
+      list.appendChild(item);
+    });
+  }
+  function renderRisks(input,result){
+    var list=$('riskList');
+    list.innerHTML='';
+    var warnings=RiskCore.evaluate(input,result);
+    list.hidden=warnings.length===0;
+    warnings.forEach(function(text){
+      var li=document.createElement('li');
+      li.className='risk-item';
+      li.innerHTML='<span class="risk-icon" aria-hidden="true">⚠</span><span>'+text+'</span>';
+      list.appendChild(li);
+    });
+  }
+  function render(){
+    if(!mainRouteValid || Number($('newFare').value)<=0 || $('newFare').value===''){
+      $('results').hidden=true;
+      $('emptyState').hidden=false;
+      return;
+    }
+    var input=readInput();
+    var result=MetroCore.calculate(input);
+    $('results').hidden=false;
+    $('emptyState').hidden=true;
+
+    $('oldFareBig').textContent=input.oldFare;
+    $('newFareBig').textContent=input.newFare;
+    /* 旧票价缺失/为0 时无法算涨幅，应说明"无法对比"而不是谎称"票价不变" */
+    var badgeText;
+    if(!(input.oldFare>0)){
+      badgeText='无旧票价';
+    }else{
+      var percent=Math.round((input.newFare/input.oldFare-1)*100);
+      if(percent>0) badgeText='涨 '+percent+'%';
+      else if(percent<0) badgeText='降 '+Math.abs(percent)+'%';
+      else badgeText=(Math.abs(input.newFare-input.oldFare)<0.005?'票价不变':'票价基本持平');
+    }
+    $('changeBadge').textContent=badgeText;
+    var badgeDown=(input.oldFare>0 && input.newFare<input.oldFare);
+    $('changeBadge').className='change-badge'+(badgeDown?' down':'');
+    document.querySelector('.fare-block.new strong').style.color=badgeDown?'var(--green)':'var(--red)';
+
+    /* KPI 两段式：
+       第一段 = 纯涨价影响（不买卡，新刷码 − 旧方案），口径一致，恒 >= 0
+       第二段 = 按最优方案后与去年比较，可能为负（反而少花） */
+    var diffPayg=result.diffPayg;
+    var diffBest=result.diffBest;
+    var saving=result.saving;
+    var paygUp=diffPayg>0.05;
+    var paygDown=diffPayg<-0.05;
+    /* 零差时 label 是"支出"，数字必须用实际支出（payg.total），不能用差额 0 */
+    var paygIsFlat=!paygUp && !paygDown;
+    if(result.best.key==='payg'){
+      $('kpiLabel').textContent=paygUp?'你每月要多花':(paygDown?'你每月少花':'你的每月支出');
+      $('kpiMonth').textContent=paygIsFlat
+        ? money(result.payg.total)
+        : (paygDown?money(Math.abs(diffPayg)):signedMoney(diffPayg));
+      $('kpiMonth').className='kpi-value'+(paygDown?' down':'');
+      $('kpiStage2').hidden=true;
+      $('kpiNote').hidden=false;
+      $('kpiNote').textContent=paygIsFlat?'（每月支出与调价前基本持平）':'（你的票价，买计次票省不了多少）';
+    }else{
+      $('kpiLabel').textContent=paygUp?'不买卡，你每月要多花':(paygDown?'不买卡，你每月少花':'不买卡，你每月支出');
+      $('kpiMonth').textContent=paygIsFlat
+        ? money(result.payg.total)
+        : (paygDown?money(Math.abs(diffPayg)):signedMoney(diffPayg));
+      $('kpiMonth').className='kpi-value'+(paygDown?' down':'');
+      $('kpiStage2').hidden=false;
+      $('kpiLabel2').innerHTML=(saving>=20?'<span class="kpi-check" aria-hidden="true">✓</span>':'')+'买 '+result.best.n+' 次票后';
+      /* 第二段：对比"涨价后刷码"，说明买卡能省多少（不是和涨价前比） */
+      $('kpiBestPrefix').textContent='每月省';
+      $('kpiBest').textContent=money(saving);
+      $('kpiBest').className='kpi-best down';
+      $('kpiNote').hidden=true;
+      if(saving>=20){
+        $('kpiSaving').className='kpi-saving';
+        $('kpiSaving').textContent='一年省约 '+money(saving*12)+' 元';
+      }else{
+        $('kpiSaving').className='kpi-saving weak';
+        $('kpiSaving').textContent='省得不多，差别不大';
+      }
+    }
+    /* 年化：与第一段（涨价影响）同口径，正负分别表述，避免"每月少花但每年多花"的矛盾。
+       零差时用实际支出年化，不能把差额 0 当成支出。 */
+    if(result.best.key==='payg'){
+      var yearUp=diffPayg>0.05, yearDown=diffPayg<-0.05;
+      $('kpiYear').textContent=(yearUp?'每年约多花 ':(yearDown?'每年约少花 ':'每年约支出 '))
+        + money((yearUp||yearDown?Math.abs(diffPayg):result.payg.total)*12)+' 元 · 按 12 个月估算';
+    }else{
+      $('kpiYear').textContent='每年约省 '+money(saving*12)+' 元 · 按 12 个月估算';
+    }
+
+    /* 分享卡：
+       第一段 = 涨价影响（payg − oldCost），恒显示，语义为"每月要多花"
+       第二段 = 方案效果（payg − best），仅当省钱够多（≥20元/月）才显示
+       省钱少或不省钱 → 直接不显示第二段，不做任何"不划算"之类评价 */
+    /* 零差时标签也要改，不能一边说"要多花"一边显示 0.0 */
+    if(paygIsFlat){
+      $('shareLabel').textContent='我每月支出';
+      $('shareNumber').innerHTML=money(result.payg.total)+'<small>元</small>';
+    }else{
+      $('shareLabel').textContent=paygDown?'我每月少花':'我每月要多花';
+      $('shareNumber').innerHTML=(paygDown?money(Math.abs(diffPayg)):signedMoney(diffPayg))+'<small>元</small>';
+    }
+
+    if(result.best.key==='payg'){
+      var gap=result.bestPass.total-result.payg.total;
+      /* 差额很小时不斩钉截铁，避免换乘条件稍变就翻转 */
+      if(gap<5+1e-6){
+        $('recommendationTitle').textContent='刷码略省，两种方案基本打平';
+        $('recommendationSaving').textContent='按当前条件，两种方案每月约差 '+money(gap)+' 元。换乘条件（是否 120 分钟内、方向）稍有变化就可能翻转，可自行取舍。';
+      }else{
+        $('recommendationTitle').textContent='建议直接刷码，无需购买计次票';
+        $('recommendationSaving').textContent='比最划算的计次票每月少花 '+money(gap)+' 元';
+      }
+      $('recommendationDetail').textContent=input.newFare<=4?
+        '单程 '+input.newFare+' 元，低于计次票最低名义单价 4.33 元。':
+        '每月 '+result.totalTrips+' 次地铁行程；直接刷码已计入满额 9 折与公交联乘优惠。';
+    }else{
+      var best=result.best;
+      $('recommendationTitle').innerHTML='建议买 <strong>'+best.n+' 次票</strong>（'+best.price+' 元）';
+      /* 复用外层已声明的 saving，避免同作用域重复 var */
+      saving=result.payg.total-best.total;
+      /* 三数并列：总支出 + 两个参照（相对新规刷码省、相对调价前多花/少花） */
+      $('recommendationSaving').textContent='每月预计花 '+money(best.total)+' 元，比新规直接刷码省 '+money(saving)+' 元，比调价前'+(diffBest<0?'少花 ':'多花 ')+money(Math.abs(diffBest))+' 元';
+      var details='每月 '+result.totalTrips+' 次';
+      if(best.overflow>0) details+='，溢出 '+best.overflow+' 次已计入成本';
+      details+=best.waste>0?'，预计剩 '+best.waste+' 次。':'，无剩余次数。';
+      $('recommendationDetail').textContent=details;
+    }
+    /* 费用参照三数并列（始终显示，让三个数字的基准一目了然）
+       口径统一：三列都含公交支出（oldCostAll 已含旧公交成本） */
+    var cb=$('costBreakdown');
+    if(cb){
+      cb.hidden=false;
+      $('cbOld').textContent=money(result.oldCostAll);
+      $('cbPayg').textContent=money(result.payg.total);
+      $('cbBest').textContent=money(result.best.total);
+      /* 推荐刷码时不存在"买票后"，标签改为"推荐方案"避免误导 */
+      var bestLabel=$('cbBestLabel');
+      if(bestLabel) bestLabel.textContent=(result.best.key==='payg')?'推荐方案':'买票后';
+      var cbNote='按每月 '+input.workDays+' 天往返、共 '+result.totalTrips+' 次计算';
+      if(result.best.key!=='payg' && result.best.waste>0) cbNote+='，预计剩 '+result.best.waste+' 次';
+      cbNote+='。';
+      if(input.busPerDay>0) cbNote+='三数均含地铁与公交支出。';
+      cbNote+='旧规则成本按当月满 70 元后 9 折计算。';
+      $('cbNote').textContent=cbNote;
+    }
+    /* 第二段：仅当省钱够多（≥20元/月）才显示；省钱少则整段不显示 */
+    var shareSaving=result.saving;
+    if(result.best.key!=='payg' && shareSaving>=20-1e-6){
+      $('sharePassLines').hidden=false;
+      $('sharePassPlan').textContent='✓ 买 '+result.best.n+' 次票';
+      $('shareSaveMonth').textContent=money(shareSaving);
+      $('shareSaveYear').textContent=Math.round(shareSaving*12);
+      /* 浪费提示：只陈述"还剩几次用不完"这个客观事实。
+         不要写成"少坐 N 次就不划算"——剩余票数 ≠ 亏损临界点，
+         因为少坐会同时降低刷码成本，临界点需重新求解（判据C已单独处理）。 */
+      var wasteN=result.best.waste||0;
+      var passN=result.best.n||0;
+      var wasteRate=passN>0?wasteN/passN*100:0;
+      var noteEl=$('shareWasteNote');
+      if(noteEl){
+        if(wasteRate>10 && wasteN>0){
+          noteEl.hidden=false;
+          noteEl.textContent='（按当前次数，预计剩 '+wasteN+' 次用不完）';
+        }else{
+          noteEl.hidden=true;
+          noteEl.textContent='';
+        }
+      }
+      $('shareHook').textContent='扫码算算你能省多少';
+    }else{
+      $('sharePassLines').hidden=true;
+      /* 彻底清理第二段残留，避免切换到"省钱少"时脏数据留在 DOM */
+      var wEl=$('shareWasteNote');
+      if(wEl){ wEl.hidden=true; wEl.textContent=''; }
+      $('shareHook').textContent='扫码算算你每月花多少钱';
+    }
+    renderPlans(result);
+    renderNotices(input,result);
+    renderRisks(input,result);
+  }
+
+  /* ---- v5 分享图导出：Canvas 绘制 1080x1440 PNG ---- */
+  var lastShareState=null;
+
+  function captureShareState(){
+    var passHidden=$('sharePassLines').hidden;
+    var hasPass=!passHidden;
+    /* 主数字语义直接从 DOM 取，保证与页面所见一致 */
+    var mainLabel=($('shareLabel').textContent||'我每月要多花').trim();
+    var mainNum=($('shareNumber').textContent||'').replace('元','').trim();
+    /* 第二段语义：前缀 + 数值（如 "每月省" + "146.4"） */
+    var bestPrefix='每月省', bestNum='';
+    if(hasPass){
+      var bp=$('kpiBestPrefix'), kb=$('kpiBest');
+      if(bp) bestPrefix=(bp.textContent||'多花').trim();
+      if(kb) bestNum=(kb.textContent||'').replace('元','').trim();
+    }
+    lastShareState={
+      mainLabel:mainLabel,
+      mainNum:mainNum,
+      hasPass:hasPass,
+      plan:($('sharePassPlan').textContent||'').trim(),
+      bestPrefix:bestPrefix,
+      bestNum:bestNum,
+      saveMonth:($('shareSaveMonth').textContent||'').trim(),
+      saveYear:($('shareSaveYear').textContent||'').trim(),
+      wasteNote:(function(){var w=$('shareWasteNote');return (w && !w.hidden)?(w.textContent||'').trim():'';})(),
+      hook:($('shareHook').textContent||'扫码算算你每月花多少钱').trim()
+    };
+  }
+
+  function drawShareImage(){
+    var W=1080,H=1440;
+    var cv=document.createElement('canvas');
+    cv.width=W; cv.height=H;
+    var c=cv.getContext('2d');
+    var FONT='-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif';
+    var st=lastShareState||{mainLabel:'我每月要多花',mainNum:'0',hasPass:false,plan:'',bestPrefix:'每月省',bestNum:'',saveMonth:'',saveYear:'',wasteNote:'',hook:'扫码算算你每月花多少钱'};
+
+    // 背景：深藏青渐变
+    var g=c.createLinearGradient(0,0,W,H);
+    g.addColorStop(0,'#0e2340'); g.addColorStop(1,'#1b3f6e');
+    c.fillStyle=g; c.fillRect(0,0,W,H);
+
+    // 右上角装饰圆
+    c.save(); c.globalAlpha=.05; c.fillStyle='#fff';
+    c.beginPath(); c.arc(W-60,120,220,0,Math.PI*2); c.fill(); c.restore();
+
+    var pad=88, y=150;
+
+    // 标题
+    c.fillStyle='rgba(255,255,255,.62)';
+    c.font='600 34px '+FONT;
+    c.fillText('上海地铁涨价', pad, y);
+    y+=96;
+
+    // 主数字标签（跟随语义：每月要多花 / 每月少花 / 每月支出）
+    c.fillStyle='rgba(255,255,255,.72)';
+    c.font='500 42px '+FONT;
+    c.fillText(st.mainLabel, pad, y);
+    y+=128;
+
+    // 主数字（大红；若为"少花"则用绿色；零差/支出显示中性色）
+    var isZero=Math.abs(parseFloat(String(st.mainNum||'0').replace(/[^\d.\-]/g,'')))<0.05;
+    var isGood=/少花/.test(st.mainLabel);          // 少花 → 绿色
+    var isExpense=/支出/.test(st.mainLabel);        // 支出 → 中性色、无符号
+    c.fillStyle=isGood?'#7ee2b8':((isZero||isExpense)?'rgba(255,255,255,.88)':'#ff8a7a');
+    c.font='800 152px '+FONT;
+    var mainStr;
+    if(isZero && !isExpense){
+      mainStr='基本持平';
+      c.font='800 96px '+FONT;   // 文字比数字长，缩小字号
+    }else{
+      mainStr=String(st.mainNum||'0');
+      /* 符号规则：只有"多花"加正号；"少花"和"支出"都不加符号 */
+      mainStr=mainStr.replace(/^-/,'').replace(/^\+/,'');
+      if(!isGood && !isExpense) mainStr='+'+mainStr;
+    }
+    c.fillText(mainStr, pad-6, y);
+    var dw=c.measureText(mainStr).width;
+    c.fillStyle='rgba(255,255,255,.8)';
+    c.font='600 56px '+FONT;
+    if(!(isZero && !isExpense)) c.fillText('元', pad+dw+16, y);
+    y+=90;
+
+    // 买卡段落
+    if(st.hasPass){
+      // 分隔线
+      c.strokeStyle='rgba(255,255,255,.18)';
+      c.lineWidth=2;
+      c.beginPath(); c.moveTo(pad,y+18); c.lineTo(W-pad,y+18); c.stroke();
+      y+=96;
+
+      // 绿勾 + 方案名
+      c.fillStyle='#7ee2b8';
+      c.font='700 40px '+FONT;
+      c.fillText('✓', pad, y);
+      c.fillStyle='rgba(255,255,255,.88)';
+      c.font='600 40px '+FONT;
+      c.fillText(st.plan||'买计次票', pad+52, y);
+      y+=92;
+
+      // 每月省
+      if(st.saveMonth){
+        c.fillStyle='#7ee2b8';
+        c.font='800 86px '+FONT;
+        c.fillText('每月省 '+st.saveMonth+' 元', pad, y);
+        y+=86;
+        if(st.saveYear){
+          c.fillStyle='#9fe0c3';
+          c.font='600 42px '+FONT;
+          c.fillText('一年省约 '+st.saveYear+' 元', pad, y);
+          y+=60;
+        }
+      }
+
+      // 浪费提示（如实披露）
+      if(st.wasteNote){
+        c.fillStyle='rgba(240,201,160,.9)';
+        c.font='500 32px '+FONT;
+        c.fillText(st.wasteNote, pad, y+8);
+      }
+    }
+
+    // 底部：二维码 + 引导
+    var qrY=H-380;
+    c.strokeStyle='rgba(255,255,255,.16)';
+    c.lineWidth=2;
+    c.beginPath(); c.moveTo(pad,qrY-50); c.lineTo(W-pad,qrY-50); c.stroke();
+
+    // 二维码白底
+    var qrSize=240;
+    c.fillStyle='#fff';
+    c.beginPath();
+    if(c.roundRect) c.roundRect(pad,qrY,qrSize,qrSize,16);
+    else c.rect(pad,qrY,qrSize,qrSize);
+    c.fill();
+
+    // 把页面二维码画进来
+    var qrSrc=$('qrCanvas');
+    if(qrSrc && qrSrc.width){
+      c.drawImage(qrSrc, pad+12, qrY+12, qrSize-24, qrSize-24);
+    }
+
+    // 右侧引导文字
+    c.fillStyle='rgba(255,255,255,.9)';
+    c.font='650 44px '+FONT;
+    c.fillText(st.hook, pad+qrSize+40, qrY+90);
+    c.fillStyle='rgba(255,255,255,.5)';
+    c.font='500 28px '+FONT;
+    c.fillText('metro-fare-calc-58170.app', pad+qrSize+40, qrY+142);
+    c.fillText('.workbuddy.host', pad+qrSize+40, qrY+182);
+
+    // 底部小字
+    c.fillStyle='rgba(255,255,255,.38)';
+    c.font='500 26px '+FONT;
+    c.fillText('基于 2026-12-01 规则 · 仅供参考 · 以官方为准', pad, H-70);
+
+    return cv;
+  }
+
+  function showImagePreview(cv){
+    var img=$('previewImg');
+    var box=$('imagePreview');
+    var dataUrl;
+    try{
+      dataUrl=cv.toDataURL('image/png');
+    }catch(e){
+      dataUrl=null;
+    }
+
+    // 1) 优先尝试直接下载（桌面浏览器 / 部分安卓浏览器有效）
+    var downloaded=false;
+    try{
+      if(dataUrl){
+        var a=document.createElement('a');
+        a.href=dataUrl;
+        a.download='地铁通勤测算.png';
+        a.style.display='none';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        downloaded=true;
+      }
+    }catch(e){ downloaded=false; }
+
+    // 2) 同时显示预览区，供手机长按保存（微信/WorkBuddy 内置浏览器唯一可靠方式）
+    if(dataUrl){
+      img.src=dataUrl;
+      box.hidden=false;
+      var tip=box.querySelector('.image-preview-tip');
+      if(tip){
+        tip.textContent = downloaded
+          ? '已尝试下载。手机上请长按下方图片保存到相册'
+          : '请长按下方图片保存到相册';
+      }
+      try{ box.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){ box.scrollIntoView(); }
+    }else{
+      alert('图片生成失败，请截图保存本页分享卡。');
+    }
+  }
+
+  /* ---- v4 站点选择器：全屏弹层（替代原生 datalist） ---- */
+  var HOT_STATIONS=['人民广场','徐家汇','世纪大道','中山公园','曹杨路','莘庄','上海火车站','虹桥火车站','陆家嘴','静安寺','南京东路','张江高科'];
+  var STATION_LINES={};
+  metro.lines.forEach(function(line){
+    line.s.forEach(function(station){
+      if(!STATION_LINES[station]) STATION_LINES[station]=[];
+      STATION_LINES[station].push(line.n);
+    });
+  });
+  function searchStations(query){
+    if(!query.trim()) return null;
+    var q=query.trim();
+    var results=[];
+    for(var i=0;i<metro.names.length;i++){
+      var name=metro.names[i];
+      var idx=name.indexOf(q);
+      if(idx<0) continue;
+      var score;
+      if(name===q) score=0;
+      else if(idx===0) score=1;
+      else score=2;
+      results.push({name:name,score:score,len:name.length});
+    }
+    results.sort(function(a,b){ return a.score-b.score || a.len-b.len; });
+    return results.map(function(r){ return r.name; });
+  }
+  function stationLinesText(name){
+    var lines=STATION_LINES[name];
+    return lines?lines.join(' '):'';
+  }
+  var pickerInput=null, pickerOnChange=null;
+  var stationOverlay=$('stationOverlay'), stationPanel=$('stationPanel'), stationSearch=$('stationSearch');
+  function renderPicker(){
+    var names=searchStations(stationSearch.value);
+    var hot=$('stationHot'),hotLabel=$('stationHotLabel'),results=$('stationResults'),empty=$('stationEmpty');
+    if(names===null){
+      hotLabel.hidden=false;hot.hidden=false;results.hidden=true;empty.hidden=true;
+      return;
+    }
+    hotLabel.hidden=true;hot.hidden=true;
+    results.innerHTML='';
+    if(names.length===0){
+      results.hidden=true;empty.hidden=false;
+      return;
+    }
+    empty.hidden=true;results.hidden=false;
+    var fragment=document.createDocumentFragment();
+    names.forEach(function(name){
+      var item=document.createElement('button');
+      item.type='button';
+      item.className='station-result';
+      var nameSpan=document.createElement('span');
+      nameSpan.className='station-name';
+      nameSpan.textContent=name;
+      var linesSpan=document.createElement('span');
+      linesSpan.className='lines';
+      linesSpan.textContent=stationLinesText(name);
+      item.appendChild(nameSpan);
+      item.appendChild(linesSpan);
+      item.addEventListener('click',function(){ selectStation(name); });
+      fragment.appendChild(item);
+    });
+    results.appendChild(fragment);
+  }
+  function openPicker(input,title,onChange){
+    pickerInput=input;
+    pickerOnChange=onChange;
+    $('stationTitle').textContent=title;
+    stationSearch.value='';
+    renderPicker();
+    lockBodyScroll();
+    stationOverlay.hidden=false;
+    void stationPanel.offsetHeight;
+    stationPanel.classList.add('open');
+    /* iOS 关键：preventScroll 防止聚焦时页面跳到输入框位置 */
+    try{ stationSearch.focus({preventScroll:true}); }
+    catch(e){ stationSearch.focus(); }
+  }
+  function closePicker(){
+    stationOverlay.hidden=true;
+    stationPanel.classList.remove('open');
+    unlockBodyScroll();
+    pickerInput=null;
+    pickerOnChange=null;
+  }
+  /* iOS Safari 不支持 body overflow:hidden 锁滚动，必须用 fixed 定位法 */
+  var bodyLockY=0;
+  function lockBodyScroll(){
+    bodyLockY=window.scrollY||window.pageYOffset||0;
+    document.body.style.position='fixed';
+    document.body.style.top=(-bodyLockY)+'px';
+    document.body.style.left='0';
+    document.body.style.right='0';
+    document.body.style.width='100%';
+  }
+  function unlockBodyScroll(){
+    document.body.style.position='';
+    document.body.style.top='';
+    document.body.style.left='';
+    document.body.style.right='';
+    document.body.style.width='';
+    window.scrollTo(0,bodyLockY);
+  }
+  function selectStation(name){
+    var input=pickerInput, onChange=pickerOnChange;
+    if(input) input.value=name;
+    closePicker();
+    if(onChange) onChange();
+  }
+  function bindStationInput(input,title,onChange){
+    input.readOnly=true;
+    input.addEventListener('click',function(){ openPicker(input,title,onChange); });
+  }
+  HOT_STATIONS.forEach(function(name){
+    var chip=document.createElement('button');
+    chip.type='button';
+    chip.className='station-chip';
+    chip.textContent=name;
+    chip.addEventListener('click',function(){ selectStation(name); });
+    $('stationHot').appendChild(chip);
+  });
+  bindStationInput($('from'),'选择起点站',setMainRoute);
+  bindStationInput($('to'),'选择终点站',setMainRoute);
+  stationSearch.addEventListener('input',renderPicker);
+  $('stationClose').addEventListener('click',closePicker);
+  stationOverlay.addEventListener('click',function(event){
+    if(event.target===stationOverlay) closePicker();
+  });
+  document.addEventListener('keydown',function(event){
+    if(event.key==='Escape' && !stationOverlay.hidden) closePicker();
+  });
+  $('swap').addEventListener('click',function(){
+    var from=$('from').value;
+    $('from').value=$('to').value;
+    $('to').value=from;
+    setMainRoute();
+  });
+  $('oldFare').addEventListener('input',manualFare);
+  $('newFare').addEventListener('input',manualFare);
+  $('fareMode').addEventListener('click',function(event){
+    if(event.target && event.target.id==='restoreAuto') setMainRoute();
+  });
+  $('workDays').addEventListener('input',render);
+  $('busPerDay').addEventListener('input',render);
+  $('busFare').addEventListener('input',render);
+  $('workDays').addEventListener('change',function(){ normalize(this,1,31,23,true); render(); });
+  $('busPerDay').addEventListener('change',function(){ normalize(this,0,2,0,true); render(); });
+  $('busFare').addEventListener('change',function(){ normalize(this,0,50,2,false); render(); });
+  document.querySelectorAll('input[name="scattered"]').forEach(function(input){ input.addEventListener('change',render); });
+  $('fixedToggle').addEventListener('click',function(){
+    var opening=$('fixedBody').hidden;
+    $('fixedBody').hidden=!opening;
+    this.setAttribute('aria-expanded',String(opening));
+    this.textContent=opening?'收起固定线路':'+ 添加固定线路';
+    if(opening && fixedRows().length===0) addFixedRow();
+  });
+  $('addFixed').addEventListener('click',addFixedRow);
+
+  /* ---- v5 保存分享图 ---- */
+  $('btnSaveImage').addEventListener('click',function(){
+    captureShareState();
+    var cv=drawShareImage();
+    showImagePreview(cv);
+  });
+  $('btnClosePreview').addEventListener('click',function(){
+    $('imagePreview').hidden=true;
+  });
+
+  drawQR();
+  setMainRoute();
+})();
+</script>
+</body>
+</html>
