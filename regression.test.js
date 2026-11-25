@@ -262,6 +262,38 @@ section('7. 代码完整性');
   report('站点数据完整', metro.names.length === 413 ? 'ok' : metro.names.length, 'ok');
 }
 
+/* ================= 8. 旧价缺失处理（第6轮修复） ================= */
+section('8. 旧价缺失 · 不应输出涨跌金额');
+
+{
+  const r = MetroCore.calculate({ newFare: 4, oldFare: 0, workDays: 1, busPerDay: 0, busFare: 2, fixedRoutes: [] });
+  report('oldFare=0 → oldFareMissing 应为 true', r.oldFareMissing === true ? 'ok' : String(r.oldFareMissing), 'ok');
+  report('oldFare=0 → 实际支出应为8.0', r.payg.total.toFixed(1), 8.0);
+  // 旧价正常时不应误标
+  const r2 = MetroCore.calculate({ newFare: 4, oldFare: 3, workDays: 1, busPerDay: 0, busFare: 2, fixedRoutes: [] });
+  report('oldFare=3 → oldFareMissing 应为 false', r2.oldFareMissing === false ? 'ok' : String(r2.oldFareMissing), 'ok');
+}
+
+/* ================= 9. 平价与浮点噪声（第6轮修复） ================= */
+section('9. 平价判定 · 浮点噪声不应被当成差额');
+
+{
+  // 5元/24天：刷码与45票完全相等
+  const r = MetroCore.calculate({ newFare: 5, oldFare: 4, workDays: 24, busPerDay: 0, busFare: 2, fixedRoutes: [] });
+  const gap = r.bestPass.total - r.payg.total;
+  report('5元/24天 刷码与最优票应持平', Math.abs(gap) < 0.05 ? 'ok' : gap.toFixed(6), 'ok');
+
+  // 莘庄→外环路 20天 + 花桥→书院 10次：差值仅 5.68e-14
+  const km1 = MetroCore.distance(net, '莘庄', '外环路');
+  const km2 = MetroCore.distance(net, '花桥', '书院');
+  const r2 = MetroCore.calculate({
+    newFare: MetroCore.fareNew(km1), oldFare: MetroCore.fareOld(km1), workDays: 20, busPerDay: 1, busFare: 2,
+    fixedRoutes: [{ newFare: MetroCore.fareNew(km2), oldFare: MetroCore.fareOld(km2), count: 10, times: 10 }]
+  });
+  const d = r2.bestPass.total - r2.payg.total;
+  report('浮点噪声不应触发"刷码更省"', !(r2.bestPass.total > r2.payg.total + 0.05) ? 'ok' : d.toExponential(3), 'ok');
+}
+
 /* ================= 汇总 ================= */
 console.log('\n' + '='.repeat(70));
 console.log(`结果：${pass} 项通过，${fail} 项失败`);
