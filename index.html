@@ -1298,6 +1298,9 @@ var RiskCore = (function(){
          不能输出"比调价前多花/少花"（旧价为 0 时该差额无意义） */
       if(oldMissing){
         $('recommendationSaving').textContent='每月预计花 '+money(best.total)+' 元，比新规直接刷码省 '+money(saving)+' 元';
+      }else if(Math.abs(diffBest)<0.05){
+        /* 与调价前恰好持平时不能写"多花 0.0 元" */
+        $('recommendationSaving').textContent='每月预计花 '+money(best.total)+' 元，比新规直接刷码省 '+money(saving)+' 元，与调价前基本持平';
       }else{
         $('recommendationSaving').textContent='每月预计花 '+money(best.total)+' 元，比新规直接刷码省 '+money(saving)+' 元，比调价前'+(diffBest<0?'少花 ':'多花 ')+money(Math.abs(diffBest))+' 元';
       }
@@ -1321,7 +1324,7 @@ var RiskCore = (function(){
       var cbNote='按每月 '+input.workDays+' 天往返、共 '+result.totalTrips+' 次计算';
       if(result.best.key!=='payg' && result.best.waste>0) cbNote+='，预计剩 '+result.best.waste+' 次';
       cbNote+='。';
-      if(input.busPerDay>0) cbNote+='三数均含地铁与公交支出。';
+      if(input.busPerDay>0) cbNote+=(oldMissing?'两数均含地铁与公交支出。':'三数均含地铁与公交支出。');
       if(oldMissing) cbNote+='未填写旧票价，无法计算调价前成本。';
       else cbNote+='旧规则成本按当月满 70 元后 9 折计算。';
       $('cbNote').textContent=cbNote;

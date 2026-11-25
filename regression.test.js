@@ -315,6 +315,24 @@ section('10. 旧价缺失 · 渲染层各处都不应输出无效对比');
   report('推荐语有 oldMissing 分支', html.includes('if(oldMissing){') ? 'ok' : 'FAIL', 'ok');
 }
 
+/* ================= 11. 文案一致性（第7轮验收补充） ================= */
+section('11. 文案一致性 · 数词与零差措辞');
+
+{
+  // 旧价缺失 + 有公交时，说明文字应说"两数"而非"三数"
+  report('旧价缺失+公交 → 说明用"两数"', html.includes("oldMissing?'两数均含地铁与公交支出。'") ? 'ok' : 'FAIL', 'ok');
+
+  // 买票后与调价前恰好持平，不应写"多花 0.0 元"
+  const km1 = MetroCore.distance(net, '人民广场', '华夏东路');
+  const km2 = MetroCore.distance(net, '人民广场', '滴水湖');
+  const r = MetroCore.calculate({
+    newFare: MetroCore.fareNew(km1), oldFare: MetroCore.fareOld(km1), workDays: 23, busPerDay: 0, busFare: 2,
+    fixedRoutes: [{ newFare: MetroCore.fareNew(km2), oldFare: MetroCore.fareOld(km2), count: 4, times: 4 }]
+  });
+  report('人民广场场景 diffBest 应≈0', Math.abs(r.diffBest) < 0.05 ? 'ok' : r.diffBest.toFixed(3), 'ok');
+  report('零差时推荐语用"基本持平"', html.includes('与调价前基本持平') ? 'ok' : 'FAIL', 'ok');
+}
+
 /* ================= 汇总 ================= */
 console.log('\n' + '='.repeat(70));
 console.log(`结果：${pass} 项通过，${fail} 项失败`);
